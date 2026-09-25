@@ -28,11 +28,12 @@ jobs:
           pip install -r requirements.txt
 
       # 4. 監視Botの実行
+      # 4. 監視Botの実行
       - name: Run KULASIS Monitor Bot
         env:
-          USERNAME: ${{ secrets.USERNAME }}
-          PASSWORD: ${{ secrets.PASSWORD }}
-          TOTP_SECRET: ${{ secrets.TOTP_SECRET }}
+          KULASIS_USER: ${{ secrets.KULASIS_USER }}
+          KULASIS_PASSWORD: ${{ secrets.KULASIS_PASSWORD }}
+          KULASIS_TOTP_SECRET: ${{ secrets.TOTP_SECRET }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
           python -m src.main
