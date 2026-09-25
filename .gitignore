@@ -1,0 +1,5 @@
+# デバッグ・ログ・キャッシュの除外
+debug_*.html
+state.json
+__pycache__/
+*.pyc
