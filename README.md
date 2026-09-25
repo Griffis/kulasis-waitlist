@@ -74,8 +74,8 @@ pip install -r requirements.txt
 
 | Key | 説明 |
 | :--- | :--- |
-| `USERNAME` | ECS-ID（例: `a0268101`） |
-| `PASSWORD` | ECS-ID のパスワード |
+| `KULASIS_USER` | ECS-ID（例: `a0264398`） |
+| `KULASIS_PASSWORD` | ECS-ID のパスワード |
 | `TOTP_SECRET` | 統合認証システムで発行した TOTP の Base32 シークレットキー |
 | `DISCORD_WEBHOOK_URL` | 通知先の Discord Webhook URL |
 
