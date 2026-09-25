@@ -3,7 +3,7 @@
 #   履修(人数)制限ページを開いたときの実URLに置き換えること。
 
 login:
-  start_url: "https://student.iimc.kyoto-u.ac.jp/"
+  start_url: "https://www.k.kyoto-u.ac.jp/student/la/top"
 
 pages:
   # 【未検証・要確認】ユーザー提供HTMLのパスは /student/la/entrylimit/regist。
@@ -12,7 +12,7 @@ pages:
   entrylimit: "https://www.k.kyoto-u.ac.jp/student/la/entrylimit/regist"
 
 links:
-  kulasis: "https://student.iimc.kyoto-u.ac.jp/"
+  kulasis: "https://www.k.kyoto-u.ac.jp/student/la/top"
 
 notify:
   warn_not_found: true   # 科目が見つからないときも通知する
