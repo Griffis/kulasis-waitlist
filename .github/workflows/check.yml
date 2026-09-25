@@ -1,17 +1,14 @@
 name: check
 
-# cron-job.org から workflow_dispatch API で5分おきに起動する。
-# GitHub の schedule: は使わない（遅延・スキップが起きうるため）。
 on:
   workflow_dispatch:
 
-# 前回の実行が長引いても重ならないようにする（待機中の実行は最新の1件だけ残る）
 concurrency:
   group: kulasis-check
   cancel-in-progress: false
 
 permissions:
-  contents: write # state.json をコミットするため
+  contents: write
 
 jobs:
   check:
@@ -31,10 +28,9 @@ jobs:
         env:
           KULASIS_USER: ${{ secrets.KULASIS_USER }}
           KULASIS_PASSWORD: ${{ secrets.KULASIS_PASSWORD }}
+          TOTP_SECRET: ${{ secrets.TOTP_SECRET }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           DISCORD_USER_ID: ${{ secrets.DISCORD_USER_ID }}
-        # 自動申込(apply.auto_apply)を有効化する場合は、まずローカルで
-        # --dry-run と1回きりの手動実行で挙動を確認してから true にすること。
         run: python -m src.main
 
       - name: Commit state.json

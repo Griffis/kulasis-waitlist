@@ -85,9 +85,11 @@ def run(args: argparse.Namespace) -> int:
         print(f"環境変数 {e} が未設定です", file=sys.stderr)
         return 2
 
+    totp_secret = os.environ.get("TOTP_SECRET")
+    
     try:
         client = KulasisClient(cfg)
-        client.login(user, password)
+        client.login(user, password, totp_secret=totp_secret)
         rows = parse_entrylimit(client.fetch_entrylimit_page())
     except (KulasisError, requests.RequestException) as e:
         msg = f"{type(e).__name__}: {e}"
