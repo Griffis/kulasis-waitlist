@@ -1,8 +1,6 @@
 name: KULASIS Monitor
 
 on:
-  schedule:
-    - cron: '0 0 */10 * *'  # 10日おき
   workflow_dispatch: # GitHubのWeb画面から手動で実行できるようにする設定
 
 jobs:
