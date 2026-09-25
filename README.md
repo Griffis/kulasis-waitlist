@@ -1,142 +1,106 @@
-# kulasis-waitlist
+# 履修登録早押しbot (KULASIS)
 
-KULASISの「履修(人数)制限」ページを監視し、空きが出たらDiscordに通知する（設定次第で自動申込も送る）ボット。
-構成: **GitHub Actions + cron-job.org + Discord Webhook**（mano-notifier と同じ）。
+京都大学教務情報システム（KULASIS）の履修制限（抽選・定員オーバー）科目の空き状況を監視し、空きが出た際に Discord へ通知する自動監視システムです。
+
+## 概要
+- **統合認証突破**: 京大統合認証システム（ID/Password）および TOTP（Time-based One-Time Password：時間依存型ワンタイムパスワード）を用いた MFA（Multi-Factor Authentication：多要素認証）を自動処理。
+- **セッション維持**: SAML（Security Assertion Markup Language：シングルサインオン規格）認証フローおよび URL 内の `sessid` を追跡してセッション切れを防止。
+- **空き枠監視**: 履修制限一覧ページを周期的にスクレイピングし、指定した科目の「申込数 / 定員」を判定。
+- **通知機能**: 空き枠検知時およびエラー発生時に Discord Webhook（ウェブフック：イベント発生時にリアルタイム通知する仕組み）へメッセージを送信。
+- **自動化**: GitHub Actions（Cron：指定日時に自動実行するスケジューラ）を利用した無人定期監視。
+
+---
+
+## ディレクトリ構造と役割
 
 ```
-cron-job.org (5分おき)
-  └─ POST GitHub API workflow_dispatch
-       └─ Actions: python -m src.main
-            ├─ KULASISにログイン → 履修(人数)制限ページを1回取得 → 全行を解析
-            ├─ state.json と比較（満席→空き の遷移だけ通知）
-            ├─ (任意) 空きを検知したら自動で「申込」を送信
-            └─ Discord Webhook に通知 / state.json をコミット
+履修登録早押しbot/
+├── .github/
+│   └── workflows/
+│       └── run.yml          # GitHub Actions の自動実行定義ファイル
+├── src/
+│   ├── __init__.py
+│   ├── main.py              # アプリケーションのエントリポイント（全体の制御）
+│   ├── kulasis_client.py    # KULASIS ログイン・ページ取得・HTML解析ロジック
+│   └── notifier.py          # Discord への通知送信モジュール
+├── config.yml               # 監視対象科目の設定ファイル
+├── requirements.txt         # 依存ライブラリ一覧
+├── .gitignore               # Git 管理対象外ファイルの設定
+└── README.md                # 本ドキュメント
 ```
 
-## ⚠️ 最重要：対象5科目がまだ見つかっていません
+### 主要ファイルの役割
 
-いただいた「履修(人数)制限」ページ（森川 駿 さんのMy Page、`student/la/entrylimit/regist`）を確認しましたが、
-`courses.yml` の5科目（人文地理学、宗教学各論II（死生学）、宗教学II、言語学II、社会学II）はこの一覧の中に
-**目視では見つかりませんでした**（プログラムでの再検証はしていません）。このページには「無作為抽選」対象の
-人数制限科目が並んでおり、ご依頼にあった「先着順」とは別の仕組みの可能性があります。
+- **`src/main.py`**:
+  環境変数や `config.yml` を読み込み、`KulasisClient` を通じてログインとページ取得を実行します。解析結果に基づいて Discord 通知を呼び出します。
+- **`src/kulasis_client.py`**:
+  `requests` および `BeautifulSoup4` を使用し、京大統合認証（`login.cgi` ➔ `authselect.php` ➔ `otplogin.cgi`）のリダイレクト・`sessid` 補完・TOTP 自動生成を処理します。
+- **`src/notifier.py`**:
+  Discord の Webhook URL に対して、検知結果やエラーログを整形して POST 送信します。
+- **`config.yml`**:
+  監視したい科目の名称や曜時限を YAML（ヤムル：構造化データを記述するフォーマット）形式で定義します。
 
-**使う前に**: `--offline-html`（下記「手順3」参照）で実際に一致するか確認し、一致しなければ
-- 科目名・曜時限が合っているか（シラバスで確認）
-- このページが本当に対象のページか（他に「履修登録」ページの先着順申込対象科目一覧があるかもしれない）
+---
 
-を見直してください。
+## 監視科目の追加・変更方法
 
-## ⚠️ その他の未検証の部分
-
-- `config.yml` の `pages.entrylimit` のドメイン名（`https://www.k.kyoto-u.ac.jp` は推測、要確認）
-- ログイン後にSAMLで戻ってくる流れ、および多要素認証（ワンタイムパスワード）が実際にどう出るか
-  - いただいたログイン画面のボタンHTMLを元に「OTP送信ボタンが非表示のままかどうか」で判定するよう修正済みだが、実際にOTPが必要なアカウントかどうかは未確認
-  - KULMS+ 拡張機能によるOTP省略の仕組みは、次回いただく情報を元に別途対応する予定（今回は未実装）
-- `apply()`（自動申込）: 1クリックで確定するのか確認画面を挟むのか未検証。確認フォームが続く限り最大3回送信するようにしているが、実際の挙動は要確認
-
-## 自動申込について（要注意）
-
-`config.yml` の `apply.auto_apply: true` にすると、空きを検知した瞬間に自動で申込を送信します。
-**取り消せない可能性がある操作**なので、必ず次の順で確認してください。
-
-1. `python -m src.main --offline-html local/sample.html` でパーサ・科目の一致を確認
-2. `python -m src.main --dry-run` でログイン・取得・判定だけ確認（申込は送信されない）
-3. `auto_apply: false` のまま1回 `python -m src.main` を手動実行し、通知が正しいか確認
-4. 上記が全て問題なければ `auto_apply: true` にし、まず自分で1科目だけ試す
-
-同じ科目には一度申込を送信したら（`state.json` に記録）、それ以降は再送信しません。
-
-## 科目の追加
-
-`courses.yml` に1ブロック足して push するだけ。
+`config.yml` を編集することで、監視対象の科目を自由に追加・削除できます。
 
 ```yaml
-  - name: 経済学II
-    day: 水
-    period: 3
+courses:
+  - name: "Programming Practice (Python) -E2"
+    day_period: "水5"
+  - name: "人文地理学"
+    day_period: "月2"
 ```
 
-## セットアップ（各手順の「成功の目安」つき）
+### 設定時の注意点
+* **`name`**: KULASIS の履修制限一覧画面に表示されている**正確な科目名**を指定してください（全角・半角やスペースの違いで判定エラーになります）。
+* **`day_period`**: 曜時限（例: `月1`, `水5` など）を指定します。
 
-### 1. リポジトリ作成
+---
 
-`kulasis-waitlist` を **Public** で作成し、このフォルダの中身を push。
-（Private だと Actions は月2,000分の枠で、5分おき=月約8,600回実行は枠を超える。Public の標準ランナーは無料）
-Public にしても Secrets は非公開。`courses.yml` と `state.json` は見える。
+## セットアップと運用方法
 
-- ✅ 成功: GitHub の Actions タブに `check` ワークフローが表示される。
-
-### 2. Secrets 登録（Settings → Secrets and variables → Actions）
-
-| 名前 | 内容 |
-|---|---|
-| `KULASIS_USER` | ECS-ID |
-| `KULASIS_PASSWORD` | ECS-IDのパスワード |
-| `DISCORD_WEBHOOK_URL` | Discord Webhook URL |
-| `DISCORD_USER_ID` | （任意）メンション用のDiscordユーザーID |
-
-- ✅ 成功: Secrets 一覧に上記が並ぶ（値は再表示されない）。
-
-### 3. 実サイトに合わせる（最重要）
-
-1. ブラウザでKULASISにログイン → 「履修(人数)制限」ページを開く。
-2. アドレスバーのURLを `config.yml` の `pages.entrylimit` に反映。
-3. **ページを「名前を付けて保存」**して `local/sample.html` に置く（個人情報・自分の在籍情報が含まれるので取り扱い注意、コミットしない）。
-4. パーサ・科目一致の確認:
-   ```bash
-   pip install -r requirements-dev.txt
-   python -m src.main --offline-html local/sample.html
-   ```
-   - ✅ 成功: 5科目それぞれが `available / full / not_found` と `申込数/定員` で表示される。
-   - ❌ 全て `not_found` の場合、科目名(`match`)またはこのページ自体が対象と違う可能性が高い（上記「最重要」参照）。
-5. ログインと取得の確認（ローカル、通知・申込なし）:
-   ```bash
-   export KULASIS_USER=... KULASIS_PASSWORD=...
-   python -m src.main --dry-run
-   ```
-   - ✅ 成功: `月2:人文地理学: None -> full 30/30` のような行が5つ出る。
-   - ❌ `MfaRequired` → 多要素認証が実際に要求されている。別方式の検討が必要（KULMS+の情報待ち）。
-   - ❌ `LoginError` → ID/パスワード誤り、またはフォーム構造の想定違い。
-
-> **保存したHTML/HAR の取り扱い注意**: 個人の履修情報・Cookie・パスワードが含まれうる。共有・コミットしない（`.gitignore`済み）。
-
-### 4. Discord 疎通
-
+### 1. 依存ライブラリのインストール（ローカル開発時）
 ```bash
-export DISCORD_WEBHOOK_URL=...
-python -m src.main --test-discord
+pip install -r requirements.txt
 ```
-- ✅ 成功: Discordに「✅ kulasis-waitlist: テスト通知」が届く。
 
-### 5. Actions を手動実行
+### 2. 環境変数の設定 (GitHub Secrets)
+本リポジトリでは認証情報を Git に含めないため、GitHub 上の Secrets に登録して運用します。
 
-Actions タブ → `check` → Run workflow。
-- ✅ 成功: 緑のチェック。`state.json` が更新されたコミット（変化があった場合のみ）が入る。
+リポジトリの `Settings > Secrets and variables > Actions` から以下の Secret を登録してください。
 
-### 6. cron-job.org から5分おきに起動
+| Key | 説明 |
+| :--- | :--- |
+| `USERNAME` | ECS-ID（例: `a0268101`） |
+| `PASSWORD` | ECS-ID のパスワード |
+| `TOTP_SECRET` | 統合認証システムで発行した TOTP の Base32 シークレットキー |
+| `DISCORD_WEBHOOK_URL` | 通知先の Discord Webhook URL |
 
-1. GitHub → Settings → Developer settings → Fine-grained personal access token を作成。
-   対象リポジトリはこの1つだけ、権限は **Actions: Read and write**。
-2. cron-job.org で新規ジョブ:
-   - URL: `https://api.github.com/repos/Griffis/kulasis-waitlist/actions/workflows/check.yml/dispatches`
-   - Method: `POST`
-   - Headers: `Authorization: Bearer <トークン>` / `Accept: application/vnd.github+json` / `Content-Type: application/json`
-   - Body: `{"ref":"main"}`
-   - Schedule: 5分おき
-- ✅ 成功: cron-job.org の実行履歴が 2xx（GitHub Docs上は 200/204）で、Actions タブに実行が5分ごとに増える。
+---
 
-## 通知の仕様
+## 実行コマンド (ローカル環境)
 
-| 状況 | 通知 |
-|---|---|
-| 満席（または初回観測）→ 空き | 🟢 空きが出ました（`auto_apply: true` なら自動申込の結果も付記） |
-| 空き → 満席 | 🔴 満席に戻りました（`notify_closed: false` で無効化） |
-| 科目が見つからない | ⚠️ 状態が変わったとき1回だけ（`warn_not_found: false` で無効化） |
-| ログイン失敗・取得失敗・自動申込失敗 | ❌ |
-| 初回で満席 | 通知なし（基準として記録） |
+※ ローカルで実行する場合は、事前に環境変数をセットするか `.env` ファイルを作成してください。
 
-## 運用メモ
+### ドライラン（動作確認）
+実際の登録・通知処理テスト（デバッグログ出力あり）を行います。
+```bash
+python -m src.main --dry-run
+```
 
-- KULASISは同一画面で30分操作がないと自動ログアウトされる（本ボットは毎回ログインし直す）。
-- 5分おきの自動ログインは大学システムへの継続的アクセスになる。負荷・利用規約に配慮すること。
-- 開発: `pip install -r requirements-dev.txt && pytest`
+### 本番実行
+```bash
+python -m src.main
+```
+
+---
+
+## 注意事項・リスク
+
+1. **アカウントロックのリスク**:
+   GitHub Actions からのアクセス頻度が高すぎると、京大統合認証システムから IP ブロックやアカウント一時凍結を受ける可能性があります。Cron 実行の周期は最短でも 5 分〜10 分以上に設定してください。
+2. **TOTP の時刻同期**:
+   2 段階認証コードの生成には正確な時刻が必要です。GitHub Actions 上では自動的に UTC 時刻が同期されています。
