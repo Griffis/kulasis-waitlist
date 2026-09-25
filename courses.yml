@@ -31,3 +31,7 @@ courses:
   - name: 社会学II
     day: 金
     period: 4
+
+  - name: Programming Practice (Python) -E2
+    day: 水
+    period: 5
