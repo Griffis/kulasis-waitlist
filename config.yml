@@ -1,0 +1,26 @@
+# KULASIS への接続設定。
+# 【重要・未検証】ドメイン名は確認できていない。ブラウザのアドレスバーで
+#   履修(人数)制限ページを開いたときの実URLに置き換えること。
+
+login:
+  start_url: "https://student.iimc.kyoto-u.ac.jp/"
+
+pages:
+  # 【未検証・要確認】ユーザー提供HTMLのパスは /student/la/entrylimit/regist。
+  # ドメインは KULASIS の一般的なホスト（例: https://www.k.kyoto-u.ac.jp）を
+  # 仮置きしている。ブラウザで実際に開いてURLをコピーし、ここを置き換えること。
+  entrylimit: "https://www.k.kyoto-u.ac.jp/student/la/entrylimit/regist"
+
+links:
+  kulasis: "https://student.iimc.kyoto-u.ac.jp/"
+
+notify:
+  warn_not_found: true   # 科目が見つからないときも通知する
+  notify_closed: true    # 空き → 満席 に戻ったときも通知する
+
+apply:
+  # 【要注意・未検証】true にすると、空きを検知した瞬間に自動で「申込」を
+  # 送信する。1クリックで確定するのか確認画面を挟むのか未検証。
+  # 必ず --dry-run と、ローカルでの1回だけの手動実行で挙動を確認してから
+  # true にすること。取り消しができない可能性がある。
+  auto_apply: false
