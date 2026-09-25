@@ -6,6 +6,7 @@ import os
 import sys
 from pathlib import Path
 
+from dotenv import load_dotenv
 import requests
 
 from .config import Course, load_config, load_courses, norm
@@ -13,6 +14,9 @@ from .kulasis_client import ApplyError, KulasisClient, KulasisError
 from .notify import send_discord
 from .parser import EntryRow, parse_entrylimit
 from .state import load_state, save_state, transition_kind
+
+# .env ファイルから環境変数を自動読み込み
+load_dotenv()
 
 
 def find_row(course: Course, rows: list[EntryRow]) -> EntryRow | None:
@@ -64,7 +68,7 @@ def run(args: argparse.Namespace) -> int:
         return 0
 
     webhook = os.environ.get("DISCORD_WEBHOOK_URL", "")
-    mention = f"<@{os.environ['DISCORD_USER_ID']}> " if os.environ.get("DISCORD_USER_ID") else ""
+    # mention = f"<@{os.environ['DISCORD_USER_ID']}> " if os.environ.get("DISCORD_USER_ID") else ""
 
     def notify(msg: str) -> None:
         if args.dry_run:
@@ -90,6 +94,9 @@ def run(args: argparse.Namespace) -> int:
     try:
         client = KulasisClient(cfg)
         client.login(user, password, totp_secret=totp_secret)
+        # ページ取得とデバッグ保存
+        html = client.fetch_entrylimit_page()
+        Path("debug_fetched.html").write_text(html, encoding="utf-8")
         rows = parse_entrylimit(client.fetch_entrylimit_page())
     except (KulasisError, requests.RequestException) as e:
         msg = f"{type(e).__name__}: {e}"
