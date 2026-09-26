@@ -21,11 +21,11 @@ load_dotenv()
 
 
 def normalize_text(text: str) -> str:
-    """全角英数・記号・スペースを半角に統一し、余白と大文字小文字のズレを吸収する"""
+    """全角英数・記号の正規化、小文字化、およびすべての空白を除去する"""
     if not text:
         return ""
     normalized = unicodedata.normalize("NFKC", text)
-    return " ".join(normalized.split()).lower()
+    return "".join(normalized.split()).lower()
 
 
 def find_row(course: Course, rows: list[EntryRow]) -> EntryRow | None:
