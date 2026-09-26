@@ -1,22 +1,7 @@
 {
   "courses": {
-    "月2:人文地理学": {
-      "status": "not_found"
-    },
-    "木3:言語学II": {
-      "status": "not_found"
-    },
     "水5:Programming Practice (Python) -E2": {
       "status": "available"
-    },
-    "火1:宗教学各論II（死生学）": {
-      "status": "not_found"
-    },
-    "火2:宗教学II": {
-      "status": "not_found"
-    },
-    "金4:社会学II": {
-      "status": "not_found"
     }
   },
   "last_error": null
