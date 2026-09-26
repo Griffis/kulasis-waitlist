@@ -7,6 +7,11 @@ from urllib.parse import urljoin
 import pyotp
 import requests
 from bs4 import BeautifulSoup
+import warnings
+from bs4 import XMLParsedAsHTMLWarning
+
+# BS4の警告を非表示にする
+warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
 
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 MAX_HOPS = 15
@@ -62,9 +67,11 @@ class KulasisClient:
     def fetch_entrylimit_page(self) -> str:
         """履修(人数)制限ページのHTMLを取得する"""
         url = "https://www.k.kyoto-u.ac.jp/student/la/entrylimit/regist"  # 対象ページのURL
-        res = self.session.get(url)
-        res.raise_for_status()
-        return res.text
+        response = self.session.get(url)
+        response.raise_for_status()
+        # 文字化け対策: レスポンスのエンコーディングを自動判定（または 'euc-jp' / 'utf-8'）に設定
+        response.encoding = response.apparent_encoding
+        return response.text
 
     def __init__(self, cfg: dict, timeout: int = 20):
         self.cfg = cfg
@@ -91,7 +98,7 @@ class KulasisClient:
             title = soup.title.string.strip() if soup.title and soup.title.string else "No Title"
             forms = soup.find_all("form")
 
-            print(f"[DEBUG {hop+1}/{MAX_HOPS}] URL: {curr_url} | Title: {title}")
+            # print(f"[DEBUG {hop+1}/{MAX_HOPS}] URL: {curr_url} | Title: {title}")
 
             # KULASIS側に復帰し、パスワード欄が無ければログイン完了
             if "iimc.kyoto-u.ac.jp" not in curr_url and not _has_password_field(r.text):
@@ -240,8 +247,8 @@ class KulasisClient:
                     # TOTPシークレットの整形とコード生成
                     clean_secret = totp_secret.strip().replace(" ", "").upper()
                     otp_code = pyotp.TOTP(clean_secret).now()
-                    print(f" [DEBUG] 使用中の鍵(末尾4桁): ...{clean_secret[-4:]}")
-                    print(f" [DEBUG] 生成されたOTPコード: {otp_code}")
+                    # print(f" [DEBUG] 使用中の鍵(末尾4桁): ...{clean_secret[-4:]}")
+                    # print(f" [DEBUG] 生成されたOTPコード: {otp_code}")
                     data[otp_input["name"]] = otp_code
                     submitted_otp = True
 

@@ -3,3 +3,4 @@ debug_*.html
 state.json
 __pycache__/
 *.pyc
+.env
