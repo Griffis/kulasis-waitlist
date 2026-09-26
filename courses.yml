@@ -11,26 +11,26 @@
 # 正しいか再確認してから使うこと。
 
 courses:
-  - name: 人文地理学
-    day: 月
-    period: 2
+  # - name: 人文地理学
+    # day: 月
+    # period: 2
 
-  - name: 宗教学各論II（死生学）
-    day: 火
-    period: 1
-    match: 宗教学各論II
+  # - name: 宗教学各論II（死生学）
+    # day: 火
+    # period: 1
+    # match: 宗教学各論II
 
-  - name: 宗教学II
-    day: 火
-    period: 2
+  # - name: 宗教学II
+    # day: 火
+    # period: 2
 
-  - name: 言語学II
-    day: 木
-    period: 3
+  # - name: 言語学II
+    # day: 木
+    # period: 3
 
-  - name: 社会学II
-    day: 金
-    period: 4
+  # - name: 社会学II
+    # day: 金
+    # period: 4
 
   - name: Programming Practice (Python) -E2
     day: 水
