@@ -1,19 +1,20 @@
-name: check
+name: KULASIS Monitor
 
 on:
   workflow_dispatch:
 
 concurrency:
-  group: kulasis-check
+  group: kulasis-monitor
   cancel-in-progress: false
 
 permissions:
   contents: write
 
 jobs:
-  check:
+  monitor:
     runs-on: ubuntu-latest
     timeout-minutes: 3
+
     steps:
       - uses: actions/checkout@v4
 
@@ -24,22 +25,17 @@ jobs:
 
       - run: pip install -r requirements.txt
 
-      - name: Check seats
+      - name: Run KULASIS Monitor Bot
         env:
           KULASIS_USER: ${{ secrets.KULASIS_USER }}
           KULASIS_PASSWORD: ${{ secrets.KULASIS_PASSWORD }}
           TOTP_SECRET: ${{ secrets.TOTP_SECRET }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          DISCORD_USER_ID: ${{ secrets.DISCORD_USER_ID }}
         run: python -m src.main
 
       - name: Commit state.json
         if: always()
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add state.json
-          if ! git diff --cached --quiet; then
-            git commit -m "chore: update state"
-            git push
-          fi
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update state"
+          file_pattern: "state.json"

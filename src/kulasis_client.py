@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import re
 from urllib.parse import urljoin
 
@@ -13,11 +12,10 @@ from bs4 import XMLParsedAsHTMLWarning
 # BS4の警告を非表示にする
 warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
 
-import unicodedata
-
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 MAX_HOPS = 15
 SAML_FIELDS = {"SAMLResponse", "SAMLRequest", "RelayState"}
+KULASIS_ENCODING = "cp932"  # KULASISは windows-31j(=CP932) 固定。apparent_encodingの誤判定を避ける
 
 
 class KulasisError(Exception):
@@ -66,15 +64,6 @@ def _form_data(form) -> dict[str, str]:
 
 class KulasisClient:
 
-    def fetch_entrylimit_page(self) -> str:
-        """履修(人数)制限ページのHTMLを取得する"""
-        url = "https://www.k.kyoto-u.ac.jp/student/la/entrylimit/regist"  # 対象ページのURL
-        response = self.session.get(url)
-        response.raise_for_status()
-        # 文字化け対策: レスポンスのエンコーディングを自動判定（または 'euc-jp' / 'utf-8'）に設定
-        response.encoding = response.apparent_encoding
-        return response.text
-
     def __init__(self, cfg: dict, timeout: int = 20):
         self.cfg = cfg
         self.timeout = timeout
@@ -103,8 +92,6 @@ class KulasisClient:
             curr_url = r.url
             title = soup.title.string.strip() if soup.title and soup.title.string else "No Title"
             forms = soup.find_all("form")
-
-            # print(f"[DEBUG {hop+1}/{MAX_HOPS}] URL: {curr_url} | Title: {title}")
 
             # KULASIS側に復帰し、パスワード欄が無ければログイン完了
             if "iimc.kyoto-u.ac.jp" not in curr_url and not _has_password_field(r.text):
@@ -148,11 +135,8 @@ class KulasisClient:
             if pw_input is not None:
                 if submitted_credentials:
                     raise LoginError("ID/パスワードが受け付けられませんでした(認証画面に戻されました)")
-                
                 form = pw_input.find_parent("form")
                 data = _form_data(form)
-                
-                # sessid を保持
                 if data.get("sessid"):
                     current_sessid = data["sessid"]
 
@@ -168,7 +152,6 @@ class KulasisClient:
                 )
                 if not user_field or not pw_input.get("name"):
                     raise LoginError("ログインフォームの入力欄名を特定できませんでした")
-                
                 data[user_field] = user
                 data[pw_input["name"]] = password
                 submitted_credentials = True
@@ -211,11 +194,9 @@ class KulasisClient:
                 parsed = urlparse(curr_url)
                 qs = parse_qs(parsed.query)
 
-                # sessid が空の場合、保持していた sessid をセット
                 if current_sessid and (not qs.get("sessid") or not qs["sessid"][0]):
                     qs["sessid"] = [current_sessid]
 
-                # パラメータ構造を実際のブラウザ通信に合わせる
                 flat_qs = {k: v[0] for k, v in qs.items()}
                 flat_qs["method"] = ""
                 flat_qs["excluded"] = "u2flogin,fidouplogin,fidouvlogin,otplogin"
@@ -250,15 +231,11 @@ class KulasisClient:
                     data = _form_data(form)
                     data.pop("dummy", None)
 
-                    # TOTPシークレットの整形とコード生成
                     clean_secret = totp_secret.strip().replace(" ", "").upper()
                     otp_code = pyotp.TOTP(clean_secret).now()
-                    # print(f" [DEBUG] 使用中の鍵(末尾4桁): ...{clean_secret[-4:]}")
-                    # print(f" [DEBUG] 生成されたOTPコード: {otp_code}")
                     data[otp_input["name"]] = otp_code
                     submitted_otp = True
 
-                    # フォームデータ側の sessid も空なら補完
                     if current_sessid and not data.get("sessid"):
                         data["sessid"] = current_sessid
 
@@ -281,9 +258,54 @@ class KulasisClient:
                 r = self._req("POST" if method == "POST" else "GET", action, **kw)
                 continue
 
-            # エラー解析ログの出力
             form_actions = [f.get("action") for f in forms]
             links = [a.get("href") for a in soup.find_all("a")]
             raise LoginError(f"未対応の認証ステップに到達しました (URL: {curr_url}, フォーム動作先: {form_actions}, リンク先: {links[:3]})")
 
         raise LoginError(f"リダイレクト/フォーム送信が{MAX_HOPS}回を超えました")
+
+    def fetch_entrylimit_page(self) -> str:
+        """履修(人数)制限ページのHTMLを取得する"""
+        url = self.cfg.get("pages", {}).get(
+            "entrylimit", "https://www.k.kyoto-u.ac.jp/student/la/entrylimit/regist"
+        )
+        r = self._req("GET", url)
+        r.encoding = KULASIS_ENCODING
+        return r.text
+
+    def apply(self, lecture_no: str) -> None:
+        """指定lecture_noの科目に申込む。
+
+        規約: 申込ボタン(regist_check) → 確認画面(primaryId) → 確定(regist_save)
+              の2段階。成功判定は最終到達URLに regist_complete が含まれるかで行う。
+        """
+        entrylimit_url = self.cfg.get("pages", {}).get(
+            "entrylimit", "https://www.k.kyoto-u.ac.jp/student/la/entrylimit/regist"
+        )
+
+        # 1段階目: 申込 → 確認画面
+        r1 = self._req(
+            "POST",
+            urljoin(entrylimit_url, "regist_check"),
+            data={"entrylimitLectureNo": lecture_no},
+        )
+        r1.encoding = KULASIS_ENCODING
+        soup = BeautifulSoup(r1.text, "lxml")
+
+        primary_id_input = soup.find("input", {"name": "primaryId"})
+        confirm_form = primary_id_input.find_parent("form") if primary_id_input else None
+        if not confirm_form:
+            raise ApplyError(
+                f"確認画面(primaryId)が見つかりません。lecture_no={lecture_no} 到達URL={r1.url}"
+            )
+
+        # 2段階目: 確認 → 確定
+        action = urljoin(r1.url, confirm_form.get("action") or "regist_save")
+        data = _form_data(confirm_form)
+        r2 = self._req("POST", action, data=data)
+        r2.encoding = KULASIS_ENCODING
+
+        if "regist_complete" not in r2.url:
+            raise ApplyError(
+                f"申込完了を確認できませんでした。lecture_no={lecture_no} 最終到達URL={r2.url}"
+            )
