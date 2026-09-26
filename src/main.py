@@ -9,7 +9,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 import requests
 
-import unicodata
+import unicodedata
 
 from .config import Course, load_config, load_courses, norm
 from .kulasis_client import ApplyError, KulasisClient, KulasisError
