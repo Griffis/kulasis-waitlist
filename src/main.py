@@ -4,12 +4,11 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+import unicodedata
 from pathlib import Path
 
 from dotenv import load_dotenv
 import requests
-
-import unicodedata
 
 from .config import Course, load_config, load_courses, norm
 from .kulasis_client import ApplyError, KulasisClient, KulasisError
@@ -22,20 +21,24 @@ load_dotenv()
 
 
 def normalize_text(text: str) -> str:
-    """全角英数・記号・スペースを半角に統一し、連続する余白を除去する"""
-    normalized = unicodedata.normalize('NFKC', text)
-    return " ".join(normalized.split())
+    """全角英数・記号・スペースを半角に統一し、余白と大文字小文字のズレを吸収する"""
+    if not text:
+        return ""
+    normalized = unicodedata.normalize("NFKC", text)
+    return " ".join(normalized.split()).lower()
 
-# 照合ロジックの例
-target_name = normalize_text("水5 Programming Practice (Python) -E2")
-scraped_name = normalize_text(scraped_item_title)
-
-if target_name in scraped_name:
-    print("科目の一致を確認しました")
 
 def find_row(course: Course, rows: list[EntryRow]) -> EntryRow | None:
+    """設定された科目名と曜時限に一致する行を検索する"""
+    target_needle = normalize_text(course.needle)
+    target_day = normalize_text(course.day_period)
+
     for r in rows:
-        if r.day_period == course.day_period and course.needle in norm(r.name):
+        row_name = normalize_text(r.name)
+        row_day = normalize_text(r.day_period)
+
+        # 曜時限が一致し、検索キーワード（科目名）が含まれているか判定
+        if row_day == target_day and target_needle in row_name:
             return r
     return None
 
@@ -82,13 +85,11 @@ def run(args: argparse.Namespace) -> int:
         return 0
 
     webhook = os.environ.get("DISCORD_WEBHOOK_URL", "")
-    # mention = f"<@{os.environ['DISCORD_USER_ID']}> " if os.environ.get("DISCORD_USER_ID") else ""
 
     def notify(msg: str) -> None:
         if args.dry_run:
             print(f"[dry-run] {msg}")
         else:
-            # send_discord(webhook, mention + msg)
             send_discord(webhook, msg)
 
     if args.test_discord:
@@ -105,14 +106,14 @@ def run(args: argparse.Namespace) -> int:
         return 2
 
     totp_secret = os.environ.get("TOTP_SECRET")
-    
+
     try:
         client = KulasisClient(cfg)
         client.login(user, password, totp_secret=totp_secret)
         # ページ取得とデバッグ保存
         html = client.fetch_entrylimit_page()
         Path("debug_fetched.html").write_text(html, encoding="utf-8")
-        rows = parse_entrylimit(client.fetch_entrylimit_page())
+        rows = parse_entrylimit(html)
     except (KulasisError, requests.RequestException) as e:
         msg = f"{type(e).__name__}: {e}"
         print(msg, file=sys.stderr)
