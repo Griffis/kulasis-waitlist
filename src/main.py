@@ -4,7 +4,6 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-import unicodedata
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -21,11 +20,8 @@ load_dotenv()
 
 
 def normalize_text(text: str) -> str:
-    """全角英数・記号の正規化、小文字化、およびすべての空白を除去する"""
-    if not text:
-        return ""
-    normalized = unicodedata.normalize("NFKC", text)
-    return "".join(normalized.split()).lower()
+    """比較用に正規化する（config.norm() + 小文字化）。config.pyと正規化処理を共通化。"""
+    return norm(text).lower() if text else ""
 
 
 def find_row(course: Course, rows: list[EntryRow]) -> EntryRow | None:
@@ -110,9 +106,9 @@ def run(args: argparse.Namespace) -> int:
     try:
         client = KulasisClient(cfg)
         client.login(user, password, totp_secret=totp_secret)
-        # ページ取得とデバッグ保存
         html = client.fetch_entrylimit_page()
-        Path("debug_fetched.html").write_text(html, encoding="utf-8")
+        if args.dry_run: #デバック保存は --dry-run 実行時のみ
+            Path("debug_fetched.html").write_text(html, encoding="utf-8")
         rows = parse_entrylimit(html)
     except (KulasisError, requests.RequestException) as e:
         msg = f"{type(e).__name__}: {e}"

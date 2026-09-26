@@ -22,7 +22,7 @@
 │   ├── __init__.py
 │   ├── main.py              # アプリケーションのエントリポイント（全体の制御）
 │   ├── kulasis_client.py    # KULASIS ログイン・ページ取得・HTML解析ロジック
-│   └── notifier.py          # Discord への通知送信モジュール
+│   └── notify.py            # Discord への通知送信モジュール
 ├── config.yml               # 監視対象科目の設定ファイル
 ├── requirements.txt         # 依存ライブラリ一覧
 ├── .gitignore               # Git 管理対象外ファイルの設定
@@ -35,7 +35,7 @@
   環境変数や `config.yml` を読み込み、`KulasisClient` を通じてログインとページ取得を実行します。解析結果に基づいて Discord 通知を呼び出します。
 - **`src/kulasis_client.py`**:
   `requests` および `BeautifulSoup4` を使用し、京大統合認証（`login.cgi` ➔ `authselect.php` ➔ `otplogin.cgi`）のリダイレクト・`sessid` 補完・TOTP 自動生成を処理します。
-- **`src/notifier.py`**:
+- **`src/notify.py`**:
   Discord の Webhook URL に対して、検知結果やエラーログを整形して POST 送信します。
 - **`config.yml`**:
   監視したい科目の名称や曜時限を YAML（ヤムル：構造化データを記述するフォーマット）形式で定義します。
