@@ -2,6 +2,8 @@
   "courses": {
     "水5:Programming Practice (Python) -E2": {
       "applied": true,
+      "apply_fail_count": 0,
+      "apply_fail_errors": [],
       "status": "available"
     }
   },
