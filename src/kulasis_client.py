@@ -13,6 +13,8 @@ from bs4 import XMLParsedAsHTMLWarning
 # BS4の警告を非表示にする
 warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
 
+import unicodedata
+
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 MAX_HOPS = 15
 SAML_FIELDS = {"SAMLResponse", "SAMLRequest", "RelayState"}
@@ -77,7 +79,11 @@ class KulasisClient:
         self.cfg = cfg
         self.timeout = timeout
         self.session = requests.Session()
-        self.session.headers["User-Agent"] = UA
+        # Accept-Language ヘッダーを追加して日本語UIを固定取得する
+        self.session.headers.update({
+            "User-Agent": UA,
+            "Accept-Language": "ja,ja-JP;q=0.9,en;q=0.8",
+        })
 
     def _req(self, method: str, url: str, **kw) -> requests.Response:
         r = self.session.request(method, url, timeout=self.timeout, **kw)

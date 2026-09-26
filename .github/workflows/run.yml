@@ -31,7 +31,7 @@ jobs:
         env:
           KULASIS_USER: ${{ secrets.KULASIS_USER }}
           KULASIS_PASSWORD: ${{ secrets.KULASIS_PASSWORD }}
-          KULASIS_TOTP_SECRET: ${{ secrets.TOTP_SECRET }}
+          TOTP_SECRET: ${{ secrets.TOTP_SECRET }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
           python -m src.main
