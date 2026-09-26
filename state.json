@@ -1,6 +1,7 @@
 {
   "courses": {
     "水5:Programming Practice (Python) -E2": {
+      "applied": true,
       "status": "available"
     }
   },
