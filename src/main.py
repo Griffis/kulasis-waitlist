@@ -94,6 +94,7 @@ def run(args: argparse.Namespace) -> int:
 
     state = load_state()
     auto_apply = bool((cfg.get("apply") or {}).get("auto_apply", False))
+    fail_notify_threshold = int((cfg.get("apply") or {}).get("fail_notify_threshold", 3))
 
     try:
         user, password = os.environ["KULASIS_USER"], os.environ["KULASIS_PASSWORD"]
@@ -126,18 +127,18 @@ def run(args: argparse.Namespace) -> int:
         entry = state["courses"].get(c.key) or {}
         old_status = entry.get("status")
         already_applied = bool(entry.get("applied"))
+        fail_count = int(entry.get("apply_fail_count", 0))
+        fail_errors = list(entry.get("apply_fail_errors", []))
         kind = transition_kind(old_status, status)
 
         kulasis_applied = row.already_applied if row is not None else False
         print(
             f"{c.key}: {old_status} -> {status} {_seats(row)} "
             f"[申込済み: KULASIS側={kulasis_applied} / state記録={already_applied}, "
-            f"auto_apply設定={auto_apply}]"
+            f"auto_apply設定={auto_apply}, 連続失敗={fail_count}]"
         )
 
         applied_now = False
-        # 状態の「変化」ではなく「今available かつ未申込か」で判定する。
-        # これにより、既にavailableな状態が続いている科目も毎回申込を試みる。
         should_try_apply = (
             auto_apply
             and status == "available"
@@ -152,18 +153,32 @@ def run(args: argparse.Namespace) -> int:
                 client.apply(row.lecture_no)
                 applied_now = True
                 already_applied = True
+                fail_count = 0
+                fail_errors = []
                 print(f"{c.key}: 自動申込 成功")
             except (KulasisError, requests.RequestException) as e:
-                print(f"{c.key}: 自動申込 失敗 {type(e).__name__}: {e}")
-                notify(f"❌ {c.day_period} {c.name} の自動申込に失敗: {type(e).__name__}: {e}")
+                status_code = getattr(getattr(e, "response", None), "status_code", None)
+                err_label = f"HTTP{status_code}" if status_code else type(e).__name__
+                fail_count += 1
+                fail_errors.append(err_label)
+                print(f"{c.key}: 自動申込 失敗({fail_count}回連続, 今回: {err_label}) {e}")
+                if fail_count % fail_notify_threshold == 0:
+                    from collections import Counter
+                    tally = Counter(fail_errors)
+                    detail = ", ".join(f"{k}×{v}" for k, v in tally.items())
+                    notify(
+                        f"⚠️ {c.day_period} {c.name}: 空きがあるのに申込に"
+                        f"{fail_count}回連続で失敗しています（内訳: {detail} / 直近: {err_label}: {e}）"
+                    )
 
         if kind:
             notify(build_message(kind, c, row, applied_now))
         elif applied_now:
-            # 状態遷移は無かったが、今回のポーリングで新たに自動申込できた場合も通知する
             notify(build_message("available", c, row, applied_now))
 
         entry["status"] = status
+        entry["apply_fail_count"] = fail_count
+        entry["apply_fail_errors"] = fail_errors
         if already_applied or (row is not None and row.already_applied):
             entry["applied"] = True
         state["courses"][c.key] = entry
