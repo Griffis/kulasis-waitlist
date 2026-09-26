@@ -127,27 +127,41 @@ def run(args: argparse.Namespace) -> int:
         old_status = entry.get("status")
         already_applied = bool(entry.get("applied"))
         kind = transition_kind(old_status, status)
-        print(f"{c.key}: {old_status} -> {status} {_seats(row)}")
+
+        kulasis_applied = row.already_applied if row is not None else False
+        print(
+            f"{c.key}: {old_status} -> {status} {_seats(row)} "
+            f"[申込済み: KULASIS側={kulasis_applied} / state記録={already_applied}, "
+            f"auto_apply設定={auto_apply}]"
+        )
 
         applied_now = False
-        if (
-            kind == "available"
-            and auto_apply
+        # 状態の「変化」ではなく「今available かつ未申込か」で判定する。
+        # これにより、既にavailableな状態が続いている科目も毎回申込を試みる。
+        should_try_apply = (
+            auto_apply
+            and status == "available"
             and row is not None
             and row.lecture_no
             and not row.already_applied
             and not already_applied
             and not args.dry_run
-        ):
+        )
+        if should_try_apply:
             try:
                 client.apply(row.lecture_no)
                 applied_now = True
                 already_applied = True
+                print(f"{c.key}: 自動申込 成功")
             except (KulasisError, requests.RequestException) as e:
+                print(f"{c.key}: 自動申込 失敗 {type(e).__name__}: {e}")
                 notify(f"❌ {c.day_period} {c.name} の自動申込に失敗: {type(e).__name__}: {e}")
 
         if kind:
             notify(build_message(kind, c, row, applied_now))
+        elif applied_now:
+            # 状態遷移は無かったが、今回のポーリングで新たに自動申込できた場合も通知する
+            notify(build_message("available", c, row, applied_now))
 
         entry["status"] = status
         if already_applied or (row is not None and row.already_applied):
