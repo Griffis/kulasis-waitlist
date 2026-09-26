@@ -150,7 +150,7 @@ def run(args: argparse.Namespace) -> int:
             notify(build_message(kind, c, row, applied_now))
 
         entry["status"] = status
-        if already_applied:
+        if already_applied or (row is not None and row.already_applied):
             entry["applied"] = True
         state["courses"][c.key] = entry
 
