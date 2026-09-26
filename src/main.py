@@ -74,7 +74,8 @@ def run(args: argparse.Namespace) -> int:
         if args.dry_run:
             print(f"[dry-run] {msg}")
         else:
-            send_discord(webhook, mention + msg)
+            # send_discord(webhook, mention + msg)
+            send_discord(webhook, msg)
 
     if args.test_discord:
         send_discord(webhook, "✅ kulasis-waitlist: テスト通知")
