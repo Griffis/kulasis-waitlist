@@ -9,6 +9,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 import requests
 
+import unicodata
+
 from .config import Course, load_config, load_courses, norm
 from .kulasis_client import ApplyError, KulasisClient, KulasisError
 from .notify import send_discord
@@ -18,6 +20,18 @@ from .state import load_state, save_state, transition_kind
 # .env ファイルから環境変数を自動読み込み
 load_dotenv()
 
+
+def normalize_text(text: str) -> str:
+    """全角英数・記号・スペースを半角に統一し、連続する余白を除去する"""
+    normalized = unicodedata.normalize('NFKC', text)
+    return " ".join(normalized.split())
+
+# 照合ロジックの例
+target_name = normalize_text("水5 Programming Practice (Python) -E2")
+scraped_name = normalize_text(scraped_item_title)
+
+if target_name in scraped_name:
+    print("科目の一致を確認しました")
 
 def find_row(course: Course, rows: list[EntryRow]) -> EntryRow | None:
     for r in rows:
