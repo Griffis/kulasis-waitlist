@@ -11,15 +11,15 @@
 # 正しいか再確認してから使うこと。
 
 courses:
-  # - name: 宗教学各論II（死生学）
-    # day: 火
-    # period: 1
-    # match: 宗教学各論II
+  - name: 宗教学各論II（死生学）
+    day: 火
+    period: 1
+    match: 宗教学各論II
 
-  # - name: 言語学II
-    # day: 木
-    # period: 3
+  - name: 言語学II
+    day: 木
+    period: 3
 
-  # - name: 社会学II
-    # day: 金
-    # period: 4
+  - name: 社会学II
+    day: 金
+    period: 4
