@@ -4,6 +4,8 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+import time
+from collections import Counter
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -17,6 +19,50 @@ from .state import load_state, save_state, transition_kind
 
 # .env ファイルから環境変数を自動読み込み
 load_dotenv()
+
+RETRY_STATUSES = {502, 503, 504}  # Bad Gateway / Service Unavailable / Gateway Timeout
+LOGIN_MAX_ATTEMPTS = 5
+LOGIN_RETRY_WAIT_SEC = 3
+
+
+class LoginRetryExhausted(KulasisError):
+    """502/503/504 で再試行しても回復しなかった。"""
+
+
+def _http_status(e: BaseException) -> int | None:
+    return getattr(getattr(e, "response", None), "status_code", None)
+
+
+def login_with_retry(
+    cfg: dict, user: str, password: str, totp_secret: str | None
+) -> tuple[KulasisClient, int, list[str]]:
+    """502/503/504 のときだけ最大 LOGIN_MAX_ATTEMPTS 回までログインをやり直す。
+
+    戻り値: (ログイン済みclient, 失敗回数, 失敗ラベル一覧)
+    それ以外のエラー(ID/パスワード誤りなど)は再試行せず即座に送出する。
+    """
+    errors: list[str] = []
+    last_exc: Exception | None = None
+    for attempt in range(1, LOGIN_MAX_ATTEMPTS + 1):
+        client = KulasisClient(cfg)  # 毎回新しいセッションで試す
+        try:
+            client.login(user, password, totp_secret=totp_secret)
+            if errors:
+                print(f"ログイン成功({attempt}回目 / 事前のエラー {len(errors)}回: {', '.join(errors)})")
+            return client, len(errors), errors
+        except requests.HTTPError as e:
+            status = _http_status(e)
+            if status not in RETRY_STATUSES:
+                raise
+            errors.append(f"HTTP{status}")
+            last_exc = e
+            print(f"ログイン失敗 HTTP{status} ({attempt}/{LOGIN_MAX_ATTEMPTS}回目)")
+            if attempt < LOGIN_MAX_ATTEMPTS:
+                time.sleep(LOGIN_RETRY_WAIT_SEC)
+    tally = ", ".join(f"{k}×{v}" for k, v in Counter(errors).items())
+    raise LoginRetryExhausted(
+        f"ログインが{LOGIN_MAX_ATTEMPTS}回連続でサーバーエラー(エラー回数: {len(errors)}回 / 内訳: {tally})"
+    ) from last_exc
 
 
 def normalize_text(text: str) -> str:
@@ -105,10 +151,9 @@ def run(args: argparse.Namespace) -> int:
     totp_secret = os.environ.get("TOTP_SECRET")
 
     try:
-        client = KulasisClient(cfg)
-        client.login(user, password, totp_secret=totp_secret)
+        client, _login_errors, _ = login_with_retry(cfg, user, password, totp_secret)
         html = client.fetch_entrylimit_page()
-        if args.dry_run: #デバック保存は --dry-run 実行時のみ
+        if args.dry_run:  # デバッグ保存は --dry-run 実行時のみ
             Path("debug_fetched.html").write_text(html, encoding="utf-8")
         rows = parse_entrylimit(html)
     except (KulasisError, requests.RequestException) as e:
@@ -157,13 +202,12 @@ def run(args: argparse.Namespace) -> int:
                 fail_errors = []
                 print(f"{c.key}: 自動申込 成功")
             except (KulasisError, requests.RequestException) as e:
-                status_code = getattr(getattr(e, "response", None), "status_code", None)
+                status_code = _http_status(e)
                 err_label = f"HTTP{status_code}" if status_code else type(e).__name__
                 fail_count += 1
                 fail_errors.append(err_label)
                 print(f"{c.key}: 自動申込 失敗({fail_count}回連続, 今回: {err_label}) {e}")
                 if fail_count % fail_notify_threshold == 0:
-                    from collections import Counter
                     tally = Counter(fail_errors)
                     detail = ", ".join(f"{k}×{v}" for k, v in tally.items())
                     notify(
