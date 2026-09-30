@@ -1,10 +1,19 @@
 {
   "courses": {
-    "水5:Programming Practice (Python) -E2": {
-      "applied": true,
+    "木3:言語学II": {
       "apply_fail_count": 0,
       "apply_fail_errors": [],
-      "status": "available"
+      "status": "not_found"
+    },
+    "火1:宗教学各論II（死生学）": {
+      "apply_fail_count": 0,
+      "apply_fail_errors": [],
+      "status": "not_found"
+    },
+    "金4:社会学II": {
+      "apply_fail_count": 0,
+      "apply_fail_errors": [],
+      "status": "not_found"
     }
   },
   "last_error": null
