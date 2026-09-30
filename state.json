@@ -16,5 +16,5 @@
       "status": "not_found"
     }
   },
-  "last_error": null
+  "last_error": "ReadTimeout: HTTPSConnectionPool(host='www.k.kyoto-u.ac.jp', port=443): Read timed out. (read timeout=20)"
 }
