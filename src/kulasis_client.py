@@ -62,6 +62,11 @@ def _has_password_field(html: str) -> bool:
     return BeautifulSoup(html, "lxml").find("input", {"type": "password"}) is not None
 
 
+def _squash(s: str) -> str:
+    """NFKC正規化 + 空白除去 + 小文字化（表記ゆれ吸収用）。"""
+    return "".join(unicodedata.normalize("NFKC", s).split()).lower()
+
+
 def _form_data(form) -> dict[str, str]:
     data: dict[str, str] = {}
     seen_submit = False
@@ -89,6 +94,8 @@ class KulasisClient:
         self.cfg = cfg
         self.timeout = timeout
         self.session = requests.Session()
+        self._warmed = False
+        self._names: dict[str, str] = {}  # lectureNo -> 科目名（追加後の確認に使う）
         # Accept-Language ヘッダーを追加して日本語UIを固定取得する
         self.session.headers.update({
             "User-Agent": UA,
@@ -286,17 +293,45 @@ class KulasisClient:
         raise LoginError(f"リダイレクト/フォーム送信が{MAX_HOPS}回を超えました")
 
     # ------------------------------------------------------------------
-    # 履修登録ページ: 科目検索（先着順）
+    # 履修登録ページ: 科目検索（先着順）と追加
     # ------------------------------------------------------------------
     def _lecture_search_url(self) -> str:
         return self.cfg.get("pages", {}).get("lecture_search", DEFAULT_LECTURE_SEARCH)
 
+    def _sibling(self, name: str) -> str:
+        """lecture_search と同じ階層(/student/la/timeslot/)のURLを作る。"""
+        return urljoin(self._lecture_search_url(), name)
+
+    def _warmup(self) -> None:
+        """ブラウザの遷移(履修登録トップ → 時間割ページ)を再現する。失敗しても続行。"""
+        if self._warmed:
+            return
+        self._warmed = True
+        for page in ("top", "timeslot_list"):
+            try:
+                self._req("GET", self._sibling(page))
+            except requests.RequestException as e:
+                print(f"[warmup] {page} の取得に失敗(続行します): {e}")
+
+    def _remember_names(self, soup: BeautifulSoup) -> None:
+        """検索結果から lectureNo -> 科目名 を記録する（追加後の確認用）。"""
+        for inp in soup.find_all("input", {"name": "lectureNo"}):
+            no = inp.get("value")
+            if not no:
+                continue
+            for tr in inp.find_parents("tr"):
+                tds = tr.find_all("td", recursive=False)
+                if len(tds) >= 10:
+                    self._names[no] = " ".join(tds[1].get_text(" ", strip=True).split())
+                    break
+
     def fetch_lecture_search(self, course_title: str, max_pages: int = 3) -> list[str]:
         """先着順対象科目を科目名で検索し、結果ページのHTMLを返す（1ページ30件、最大max_pagesまで）。
 
-        KULASISはcp932なので、日本語の検索語はcp932でパーセントエンコードして送る。
+        日本語の検索語はcp932でパーセントエンコードして送る（実ページのリンクと同じ方式）。
         ローマ数字(Ⅱ)はNFKCでアルファベット(II)へ変換（サイトの注意書きに従う）。
         """
+        self._warmup()
         base = self._lecture_search_url()
         title = unicodedata.normalize("NFKC", course_title).strip()
         pages: list[str] = []
@@ -307,20 +342,51 @@ class KulasisClient:
             r.encoding = KULASIS_ENCODING
             pages.append(r.text)
             soup = BeautifulSoup(r.text, "lxml")
+            self._remember_names(soup)
             if soup.find("a", string=re.compile("次の30件")) is None:
                 break
         return pages
 
-    def apply(self, lecture_no: str) -> None:
-        """指定lectureNoの科目に「追加」(candidate_add)を送信する。
+    @staticmethod
+    def _registered_nos(html: str) -> set[str]:
+        """時間割ページに載っている全学共通科目の lectureNo 一覧。
 
-        【未検証】「追加」後の遷移（確認画面の有無・履修登録の確定か候補追加か）は未確認。
-        現状は POST が HTTP 2xx で返れば送信成功として扱い、最終到達URLをログに出す。
-        遷移が判明したらここに確認画面の処理と成功判定を足すこと。
+        科目名は「全共:Biologi..」のように省略表示されるため、科目詳細リンク
+        /student/la/support/top?no=<lectureNo> の番号で判定する（実ページで一致を確認済み）。
         """
-        url = urljoin(self._lecture_search_url(), "candidate_add")
-        r = self._req("POST", url, data={"lectureNo": lecture_no})
+        return set(re.findall(r"/student/la/support/top\?no=(\d+)", html))
+
+    def _timeslot_html(self) -> str:
+        r = self._req("GET", self._sibling("timeslot_list"))
         r.encoding = KULASIS_ENCODING
-        print(f"[apply] candidate_add 送信 lectureNo={lecture_no} -> {r.url}")
+        return r.text
+
+    def apply(self, lecture_no: str) -> None:
+        """指定lectureNoの科目を「候補科目」に追加する(candidate_add)。
+
+        実測: POST candidate_add → 302 → timeslot_list（確認ページなし）。
+        ※履修登録の確定は登録期間(Step2)の「登録科目の決定へ」で別途行う必要がある。
+        """
+        # 二重追加時の挙動が未確認なので、既に時間割に入っていれば送信しない
+        if lecture_no in self._registered_nos(self._timeslot_html()):
+            print(f"[apply] lectureNo={lecture_no} は既に時間割に入っているため送信をスキップ")
+            return
+
+        r = self._req("POST", self._sibling("candidate_add"), data={"lectureNo": lecture_no})
+        r.encoding = KULASIS_ENCODING
+
+        chain = " -> ".join(f"{h.status_code} {h.headers.get('Location', '')}" for h in r.history)
+        print(f"[apply] lectureNo={lecture_no} 経路: {chain or '(リダイレクトなし)'} / 最終: {r.status_code} {r.url}")
+
         if _has_password_field(r.text):
             raise ApplyError(f"セッション切れの可能性: ログイン画面に戻されました lectureNo={lecture_no}")
+
+        # リダイレクト先が timeslot_list ならその応答で確認、違えば取り直す
+        after = r.text if "timeslot_list" in r.url else self._timeslot_html()
+        ok = lecture_no in self._registered_nos(after)
+        print(f"[apply] 時間割での確認: {ok}")
+        if not ok:
+            area = BeautifulSoup(after, "lxml").find("div", class_="contents")
+            snippet = " ".join((area or BeautifulSoup(after, "lxml")).get_text(" ", strip=True).split())[:400]
+            print(f"[apply] 応答本文(先頭400字): {snippet}")
+            raise ApplyError(f"追加後の時間割に科目が見当たりません(追加失敗の可能性) lectureNo={lecture_no}")

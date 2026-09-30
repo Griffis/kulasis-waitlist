@@ -5,10 +5,6 @@
 #   period : 1〜6（時限）
 #   match  : (任意) KULASIS上の科目名と照合する文字列。省略時は name。
 #            全角/半角・ローマ数字(Ⅱ/II)・空白の違いは自動で吸収される。
-#
-# 【要確認】下記5科目は、ユーザー提供の「履修(人数)制限」ページ一覧の中に
-# 見当たらなかった（README参照）。曜時限・科目名、またはページ自体が
-# 正しいか再確認してから使うこと。
 
 courses:
   - name: 宗教学各論II（死生学）
@@ -23,3 +19,11 @@ courses:
   - name: 社会学II
     day: 金
     period: 4
+
+  - name: Biological Sciences through Scientific Articles II-E2
+    day: 火
+    period: 5
+
+  - name: Programming Practice (Python) -E2
+    day: 水
+    period: 5

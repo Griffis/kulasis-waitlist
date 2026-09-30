@@ -57,7 +57,10 @@ def build_message(kind: str, course: Course, row: EntryRow | None, applied: bool
     if kind == "available":
         msg = f"🟢 **空きが出ました** {label}\n申込数/定員: {_seats(row)}"
         if applied:
-            msg += "\n→ 自動で申込を送信しました。KULASISで結果を確認してください。"
+            msg += (
+                "\n→ 自動で申込(候補科目への追加)を送信しました。"
+                "履修登録の確定は、登録期間中に「登録科目の決定へ」から行ってください。"
+            )
         return msg
     if kind == "closed":
         return f"🔴 満席に戻りました: {label}（{_seats(row)}）"

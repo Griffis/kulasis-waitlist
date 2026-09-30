@@ -1,0 +1,2494 @@
+<?xml version="1.0" encoding="windows-31j" ?>   
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Refresh" content="1800;URL=/student/logout" />
+  <meta http-equiv="Content-Type" content="text/html; charset=windows-31j" />
+  <meta http-equiv="Content-Script-Type" content="text/javascript">
+  <link rel="stylesheet" type="text/css" href="/css/behavior.css">
+  <link rel="stylesheet" type="text/css" href="/css/layout.css">
+  <link rel="stylesheet" type="text/css" href="/css/la_style.css">
+  <script type="text/javascript" src="/js/prototype.js"> </script>
+  <script type="text/javascript" src="/js/jquery.js"> </script>
+  <script>
+    jQuery.noConflict();
+  </script>
+  <script type="text/javascript" src="/js/jquery_blockUI.js"></script>
+  <script type="text/javascript" src="/js/jquery_auto.js"> </script>
+
+  <title>京都大学教務情報システム</title>
+  <link rel="stylesheet" href="/css/webfont.css" />
+
+<style>
+  .css-submit-button {
+    display: inline-block;
+  }
+  input::-webkit-contacts-auto-fill-button {
+    visibility: hidden;
+    display: none !important;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+  }
+</style>
+
+<script type="text/javascript">
+  jQuery(function() {
+    jQuery(".css-submit-button").click(function(e) {
+      jQuery(e.target).parents("form").submit();
+    });
+  });
+</script>
+</head>
+<body onload="">
+</div>
+<div id="frame">
+  <div id="header">
+  <div class="header_left">
+    <img src="/img/zk_logo_l.gif" alt="TOPへ"  id="id_img_22_0" >
+  </div>
+
+  <div class="header_right">
+    <div class="logo"><img src="/img/zk_logo_r.gif" alt="" id="id_img_22_1" ></div>
+
+    <div class="header_menu">
+      <ul class="header_menu_left">
+        <li><a href="/student/la/department_home/top"  id="id_a_22_1" ><img class="Hover" src="/img/zk_tab_dep_home.gif" alt="部局ホーム" id="id_img_22_3" ></a></li>
+                <li><a href="/student/la/syllabus/top"  id="id_a_22_5" ><img class="Hover" src="/img/zk_tab_syllabus.gif" alt="シラバス" id="id_img_22_7" ></a></li>
+                <li><a href="/student/la/entry/zenki"  id="id_a_22_7" ><img class="Hover" src="/img/zk_tab_timetable_zenki.gif" alt="時間割(前期)" id="id_img_22_9" ></a></li>
+                  <li><a href="/student/la/account/top"  id="id_a_22_29" ><img class="Hover" src="/img/zk_tab_setting.gif" alt="登録情報" id="id_img_22_31" ></a></li>
+                <li><a href="/student/la/prelang/top"  id="id_a_22_36" ><img class="Hover" src="/img/zk_tab_prelang.gif" alt="外国語予備登録" id="id_img_22_37" ></a></li>
+                  <li><a href="/student/la/timeslot/top"  id="id_a_22_14" ><img src="/img/zk_tab_timeslot_on.gif" alt="履修登録" id="id_img_22_16" ></a></li>
+                  <li><a href="/student/la/tagakubu/top"  id="id_a_22_15" ><img class="Hover" src="/img/zk_tab_timeslot_other.gif" alt="他学部聴講" id="id_img_22_17" ></a></li>
+                  <li><a href="/student/la/entrylimit/top"  id="id_a_22_15" ><img class="Hover" src="/img/zk_tab_risyu_seigen.gif" alt="履修(人数)制限" id="id_img_22_17" ></a></li>
+                  <li><a href="/student/la/ilas_seminar/top"  id="id_a_22_27" ><img class="Hover" src="/img/zk_tab_pocket_en.gif" alt="ポケット・ゼミ" id="id_img_22_29" ></a></li>
+                  </ul>
+
+      <ul class="header_menu_right three_storied">
+        <li><a href="/student/logout" id="id_a_22_30" ><img src="/img/zk_header_logout_s.gif" alt="ログアウト" id="id_img_22_32" ></a></li>
+        <li><a href="/student/la/top"   id="id_a_22_31" ><img src="/img/zk_header_kulasis_home_o_s.gif" alt="" id="id_img_22_33" ></a></li>
+        <li><a href="/student/la/department_home/top"   id="id_a_22_31" ><img src="/img/zk_header_dep_home_o_s.gif" alt=""  ></a></li>
+
+      </ul>
+    </div>
+
+  </div>
+</div>
+<div id="wrapper">
+    <style>
+ .hide {
+   display: none;
+ }
+</style>
+
+    
+<div class="menu">
+  <ul class="links">
+  <li>
+  <a href="/student/la/top"><img class="Hover" src="/img/zk_menu_kulasis_home.gif" alt="KULASIS TOP"></a>
+  </li>
+<li>
+  <a href="/student/la/global_notice/top"><img class="Hover" src="/img/zk_menu_global_notice.gif" alt="お知らせ(履修登録全部局)"></a>
+  </li>
+<li>
+  <img src="/img/zk_menu_la.gif" alt="全学共通科目">
+  </li>
+<li>
+  <img src="/img/zk_menu_tech.gif" alt="工学部">
+  </li>
+</ul>
+</div>
+
+
+
+
+
+<div class="contents">
+      <!-- PandAへのリンクロゴをページ上部に表示 -->
+<!-- 全共・全学 部局ホーム画面のみ -->
+<div class="right" style="margin-top: 3px;">
+<span class="link"><a href="/student/la/timeslot/lecture_search?condition.semester=&condition.targetStudent=&condition.courseTitle=&condition.teacherName=&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&x=30&y=9&display_lang=en">English</a></span> |
+<span class="link"><a href="/student/la/timeslot/lecture_search?condition.semester=&condition.targetStudent=&condition.courseTitle=&condition.teacherName=&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&x=30&y=9&display_lang=jp">日本語</a></span> |
+<span class="link"><a href="/student/la/privacy">プライバシー・ポリシー</a></span> |
+<span class="link"><a href="/student/la/user_guideline">利用ガイドライン</a></span> |
+<span class="link"><a href="https://sites.google.com/kyoto-u.ac.jp/ku-class-status-and-exam/">対面授業・定期試験実施状況</a></span></div>
+
+<div class="timeout_message">
+  ※30分以上操作しない場合は自動的にログアウトします。
+</div>
+<!-- contents -->
+      
+      <div class="title">
+    <img src="/img/mark_01.gif" alt="" id="id_img_1239_0" >
+    <img src="/img/title_set_timetable_fix.gif" width="96" height="23" alt="履修登録">
+  </div>
+
+  <script type="text/javascript">
+  function openPopup(a) {
+    window.open(a.href,'','width=600,height=600,scrollbars=yes');
+  }
+</script>
+
+<div style="width: 760px; text-align:right">
+  <img src="/img/icon_i.gif" alt="" /><span class="blue_notice">
+  <a href="popup_notice" onclick="openPopup(this); return false" target="_popup">全学共通科目の注意事項</a>
+  </span>
+  <br>
+  <img src="/img/icon_i.gif" alt="" /><span class="blue_notice">
+  <a href="popup_notice_department" onclick="openPopup(this); return false" target="_popup">専門科目の注意事項</a>
+  </span>
+  </div>
+<div class="explanation">
+    ここは，森川　駿 さんのMy Pageです。
+  </div>
+
+
+<style type="text/css">
+  div.timeslot_chart {
+    font-size: 13px;
+    position: relative;
+    margin-left: 40px;
+    font-weight: bold;
+    color: red;
+  }
+  div#main_chart {
+    width: 721px;
+    height: 54px;
+  }  
+
+  div#sub_chart {
+    width: 721px;
+    height: 64px;
+  }
+  span#step1_schedule {
+  position:absolute;
+  left: 12px;
+  }
+
+  span#step2_schedule {
+  position:absolute;
+  left: 168px;
+  }
+
+  span#step4_schedule {
+  position:absolute;
+  left: 405px;
+  }
+
+  span#step6_schedule {
+  position:absolute;
+  left: 635px;
+  }
+
+</style>
+
+<div class="timeslot_chart">
+  <span id="step1_schedule">9/15(火) 00:00<br />&nbsp;&nbsp;～10/12(月) 24:00</span>
+  <span id="step2_schedule">10/13(火) 00:00<br />&nbsp;&nbsp;～10/14(水) 24:00</span>
+  <span id="step4_schedule">10/17(土) 00:00<br />&nbsp;&nbsp;～10/20(火) 24:00</span>
+  <span id="step6_schedule"><br />10/22(木) 17:00</span>
+  <br />
+  <br />
+  <div id="main_chart"></div>
+  <div id="sub_chart"></div>
+</div>
+<style type="text/css">
+  div#main_chart {
+    background-image: url(/img/timeslot/chart/flow_step1.gif);
+  }
+  div#sub_chart {
+    height: 40px;
+    background-image: url(/img/timeslot/chart/flow_step1_substep1.gif);
+  }
+</style>
+<br />
+  <center >
+
+    <div style="width: 660px;">
+      <div id="la_form">
+        <center >
+          <script type="text/javascript">
+function clearCourseSearchForm() {
+    
+    jQuery('#week_schedule_holder input').each(function(){
+    	this.checked = false;
+    });
+
+    jQuery('#family_holder input').each(function(){
+    	this.checked = false;
+    });
+    jQuery('#english_course_holder input').each(function(){
+    	this.checked = false;
+    });
+    jQuery('#old_family_holder input').each(function(){
+    	this.checked = false;
+    });
+
+    jQuery('#has_capacity_holder input').each(function(){
+    	this.checked = false;
+    });
+    
+    jQuery('#course_title')[0].value = '';
+    jQuery('#teacher_name')[0].value = '';
+    jQuery('#select_semester')[0].selectedIndex = 0;
+    jQuery('#select_target')[0].selectedIndex = 0;
+}
+
+function checkAllDays() {
+	
+    var inputs = jQuery('#week_schedule_holder input');
+    
+    var all = true;
+    inputs.each(function(){
+    	if (!this.checked) {
+    		all = false;
+		}
+    });
+    
+    if (all) {
+    	inputs.each(function(){this.checked = false;});
+    } else {
+    	inputs.each(function(){this.checked = true;});
+	}
+}
+
+jQuery(function() {
+  var numbering_search_detail_open = false;
+
+  function openNumberingSearchDetail() {
+    jQuery("#numbering_search_body").show();
+    jQuery("#numbering_header").attr("rowspan", 2);
+    numbering_search_detail_open = true;
+  }
+
+  function closeNumberingSearchDetail() {
+    jQuery("#numbering_search_body").hide();
+    jQuery("#numbering_header").attr("rowspan", 1);
+    numbering_search_detail_open = false;
+  }
+
+  jQuery("#numbering_search_detail").click(function() {
+    if (numbering_search_detail_open) {
+      closeNumberingSearchDetail();
+    } else {
+      openNumberingSearchDetail();
+    }
+  });
+  
+});
+</script>
+    <form action="lecture_search" method="get" name="detail_search" id="id_form_1229_0" >
+        <table class="form_table" style="width: 570px">
+	    <tr class="form_tab"><td colspan="4">
+	            <table class="buttonList"><tr>
+	            <td>
+	            <img src="/img/tab_search_zn_o.gif" />
+	            </td>
+	            <td>
+	            <a href="" id="gakubu_form_tab"><img src="/img/tab_search_sn_x.gif" /></a>
+	            </td>
+	            </tr></table>
+            </td></tr>
+        <tr><td bgcolor="#9DA0B4" class="th_top_normal" align="center" colspan="4"></td></tr>
+
+            <tr>
+              <td align="center" class="th_normal"><span class="">開講期</span></td>
+              <td class="odd_normal">
+
+                <select name="condition.semester" id="select_semester">
+                  <option value="" class="form_disable">----</option>
+                  <option value="2" >後期</option>
+                      <option value="5" >後期集中</option>
+                      </select>
+
+              </td>
+
+
+              <td align="center" class="th_normal" rowspan="9" nowrap><span class="">曜時限</span></td>
+              <td class="odd_normal" rowspan="9" align="center">
+
+                <table border="0" width="0" cellspacing="0" cellpadding="0">
+
+                  <tr>
+                    <td align="center" colspan="7">
+
+                      <table border="0" class="timetable_table" width="0" cellspacing="" cellpadding="2" style="margin-top:5px" id="week_schedule_holder">
+                        <tr class="th_normal " align="center">
+                          <td class="timetable_sell"><img src="/img/0.gif" width="1" height="1" alt="" id="id_img_1229_0" ></td>
+                          <td class="timetable_sell">1</td>
+                          <td class="timetable_sell">2</td>
+                          <td class="timetable_sell">3</td>
+                          <td class="timetable_sell">4</td>
+                          <td class="timetable_sell">5</td>
+                        </tr>
+
+                        <tr class="" align="center">
+                          <td class="th_normal timetable_sell">月</td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[11]" value="true"  id="id_input_1229_1" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[12]" value="true"  id="id_input_1229_2" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[13]" value="true"  id="id_input_1229_3" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[14]" value="true"  id="id_input_1229_4" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[15]" value="true"  id="id_input_1229_5" ></td>
+                        </tr>
+
+                        <tr class="" align="center">
+                          <td class="th_normal timetable_sell">火</td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[21]" value="true"  id="id_input_1229_6" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[22]" value="true"  id="id_input_1229_7" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[23]" value="true"  id="id_input_1229_8" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[24]" value="true"  id="id_input_1229_9" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[25]" value="true"  id="id_input_1229_10" ></td>
+                        </tr>
+
+                        <tr class="" align="center">
+                          <td class="th_normal timetable_sell">水</td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[31]" value="true"  id="id_input_1229_11" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[32]" value="true"  id="id_input_1229_12" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[33]" value="true"  id="id_input_1229_13" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[34]" value="true"  id="id_input_1229_14" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[35]" value="true"  id="id_input_1229_15" ></td>
+                        </tr>
+
+                        <tr class="" align="center">
+                          <td class="th_normal timetable_sell">木</td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[41]" value="true"  id="id_input_1229_16" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[42]" value="true"  id="id_input_1229_17" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[43]" value="true"  id="id_input_1229_18" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[44]" value="true"  id="id_input_1229_19" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[45]" value="true"  id="id_input_1229_20" ></td>
+                        </tr>
+
+                        <tr class="" align="center">
+                          <td class="th_normal timetable_sell">金</td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[51]" value="true"  id="id_input_1229_21" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[52]" value="true"  id="id_input_1229_22" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[53]" value="true"  id="id_input_1229_23" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[54]" value="true"  id="id_input_1229_24" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[55]" value="true"  id="id_input_1229_25" ></td>
+                        </tr>
+
+                        <tr class="" align="center">
+                          <td class="th_normal timetable_sell">集<br />中<br />等</td>
+                          <td class="timetable_sell">
+                            <input type="checkbox" name="condition.syutyu" value="true"  />
+                          </td>
+                          <td class="timetable_sell" colspan="4"></td>
+                        </tr>
+
+                      </table>
+                      <a href="#" onClick="checkAllDays(); return false;" id="id_a_1229_26" ><img src="/img/button_mini_select_all_days.gif" width="129" height="22" alt="" border="0" style="margin-top:5px" name="select_all" id="id_img_1229_1" ></a>
+                    </td>
+                  </tr>
+                </table>
+
+              </td>
+            </tr>
+
+
+            <tr>
+              <td align="center" class="th_normal"><img src="/img/0.gif" width="1" height="5" alt="" id="id_img_1229_2" ><br /><span class="">群</span></td>
+              <td class="odd_normal" id="family_holder" style="line-height:1.5em;">
+                <input type="checkbox" name="condition.families[1]" value="true"   id="id_input_1229_27" ><label for="family_1">人社</label>&nbsp; 
+                <input type="checkbox" name="condition.families[2]" value="true"   id="id_input_1229_28" ><label for="family_2">自然</label>&nbsp;
+                <input type="checkbox" name="condition.families[3]" value="true"   id="id_input_1229_29" ><label for="family_3">外国語</label>&nbsp; 
+                <input type="checkbox" name="condition.families[5]" value="true"   id="id_input_1229_60" ><label for="family_5">情報</label>&nbsp; 
+                <input type="checkbox" name="condition.families[6]" value="true"   id="id_input_1229_30" ><label for="family_6">健康</label>&nbsp; 
+                <input type="checkbox" name="condition.families[7]" value="true"   id="id_input_1229_50" ><label for="family_7">キャリア</label>&nbsp;
+                <input type="checkbox" name="condition.families[4]" value="true"   id="id_input_1229_70" ><label for="family_4">統合</label>&nbsp;
+                <input type="checkbox" name="condition.families[8]" value="true"   id="id_input_1229_80" ><label for="family_8">少人数</label>&nbsp;
+                <input type="checkbox" name="condition.families[9]" value="true"    ><label for="family_9">院共通</label>&nbsp;
+                <input type="checkbox" name="condition.families[10]" value="true"   ><label for="family_10">院横断</label>&nbsp;
+                <div>*院共通、院横断は大学院生専用科目です。</div>
+			        </td>
+            </tr>
+
+            <tr>
+              <td align="center" class="th_normal"><img src="/img/0.gif" width="1" height="5" alt="" id="id_img_1229_2" ><br /><span class="">E科目</span></td>
+              <td class="odd_normal" id="english_course_holder" style="line-height:1.5em;">
+                <input type="checkbox" name="condition.englishCourses[1]" value="true"   id="id_input_1229_90" ><label for="english_course_1">E1</label>&nbsp; 
+                <input type="checkbox" name="condition.englishCourses[2]" value="true"   id="id_input_1229_91" ><label for="english_course_2">E2</label>&nbsp;
+                <input type="checkbox" name="condition.englishCourses[3]" value="true"   id="id_input_1229_92" ><label for="english_course_3">E3</label><br>
+                <span style="margin-left: 1em">*科目名には、それぞれ-E1、-E2、-E3と付記されています。</span>
+			        </td>
+            </tr>
+	    
+	          <tr>
+              <td align="center" class="th_normal"><span class="">対象学生</span></td>
+              <td class="odd_normal">
+
+                <select name="condition.targetStudent" id="select_target">
+                  <option value="" class="form_disable">----</option>
+                  <option value="1" >全学向</option>
+                      <option value="2" >文系向</option>
+                      <option value="3" >理系向</option>
+                      <option value="4" >留学生</option>
+                      </select>
+
+              </td>
+	    </tr>
+
+            <tr>
+              <td align="center" class="th_normal"><span class="">科目名</span></td>
+              <td class="odd_normal"><input id="course_title" name="condition.courseTitle" type="text" size="25" value="">
+                <br />* ローマ数字は、下記の通りアルファベットへ変換して検索してください。<br />　I:I(アイ) 、II:II(アイアイ)、IV:IV(アイヴイ)
+              </td>
+            </tr>
+            <tr>
+
+              <td align="center" class="th_normal"><span class="">担当教員</span></td>
+              <td class="odd_normal"><input id="teacher_name" name="condition.teacherName" type="text" size="25" value=""><br /><span class="x90">姓と名の間にはスペースを入れてください。</span></td>
+            </tr>
+
+           <tr>
+              <td align="center" class="th_normal"><img src="/img/0.gif" width="1" height="5" alt=""  ><br /><span class="">先着順</span></td>
+              <td class="odd_normal" id="has_capacity_holder">
+                <div>
+                  <label><input type="checkbox" name="condition.hasCapacity" value="true" checked>先着順対象科目</label>
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+                <td align="center" class="th_normal" id="numbering_header"><span class="">詳細検索</span></td>
+                <td class="odd_normal">
+                  <table style="width: 100%">
+                    <tr>
+                      <td style="vertical-align: middle">
+                        <div id="numbering_search_detail" style="display: inline-block;">
+                          <div style="display: inline-block; cursor: pointer; white-space: nowrap;">
+<div style="float: left; background-image: url('/img/button/button_medium_green_left.png'); display: inline-block; width: 11px; height: 28px;"></div>
+<div style="color: #202020; padding-left: 4px; padding-right: 4px; text-shadow: 1px 1px 1px #949494, 0px 2px 3px white, 0px -2px 3px white, -2px 0px 3px white, 2px 0px 3px white, 2px 2px 3px white, -2px 2px 3px white, 2px -2px 3px white, -2px -2px 3px white; font-family: 'KulasisWebFont'; line-height: 28px; font-size: 13px; font-weight: 500; float: left; background-image: url('/img/button/button_medium_green_center.png'); display: inline-block; height: 28px;">
+検索条件
+</div>
+<div style="float: left; background-image: url('/img/button/button_medium_green_right.png'); display: inline-block; width: 11px; height: 28px;"></div>
+</div><br />
+                          科目ナンバリング、実務科目（大学院科目非対応）等の検索が可能です。
+                        </div>
+                      </td>
+                      <td style="vertical-align: middle; text-align: right">
+                        </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+            <tr style="display: none" id="numbering_search_body">
+              <td class="odd_normal" colspan="3">
+
+                  <table style="width: 100%">
+                      <tr>
+                        <td class="th_normal"><span class="">科目ナンバリング</span></td>
+                      </tr>
+                  </table>
+
+                <table style="width: 100%">
+                  <tr>
+                    <td style="width: 6em; background-color: #7092BD;font-size: 110%; text-align: center">課程</td>
+                    <td>
+                      <select name="condition.numberingKateiNo" style="width: 100%">
+                        <option value="">---</option>
+                        <option value="1" >学部（全学共通科目を含む）</option>
+                        <option value="2" >大学院</option>
+                        </select>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="width: 6em; background-color: #7092BD;font-size: 110%; text-align: center">開講部局等</td>
+                    <td>
+                      <select name="condition.numberingDepartmentNo" style="width: 100%">
+                        <option value="">---</option>
+                        <option value="20" >全学共通科目</option>
+                        </select>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="width: 6em; background-color: #7092BD;font-size: 110%; text-align: center">群・分野</td>
+                    <td>
+                      <select name="condition.numberingDisciplineNo" style="width: 100%">
+                        <option value="">---</option>
+                        <option value="339" >人文・社会科学科目群、哲学・思想</option>
+                        <option value="340" >人文・社会科学科目群、歴史・文明</option>
+                        <option value="341" >人文・社会科学科目群、芸術・文学・言語</option>
+                        <option value="342" >人文・社会科学科目群、外国文献研究</option>
+                        <option value="343" >人文・社会科学科目群、教育・心理・社会</option>
+                        <option value="344" >人文・社会科学科目群、地域・文化</option>
+                        <option value="345" >人文・社会科学科目群、法・政治・経済</option>
+                        <option value="346" >人文・社会科学科目群、日本理解</option>
+                        <option value="347" >自然科学科目群、数学</option>
+                        <option value="348" >自然科学科目群、データ科学</option>
+                        <option value="349" >自然科学科目群、物理学</option>
+                        <option value="350" >自然科学科目群、化学</option>
+                        <option value="351" >自然科学科目群、生物学</option>
+                        <option value="352" >自然科学科目群、地球科学</option>
+                        <option value="353" >自然科学科目群、図学</option>
+                        <option value="354" >外国語科目群、英語</option>
+                        <option value="355" >外国語科目群、ドイツ語</option>
+                        <option value="356" >外国語科目群、フランス語</option>
+                        <option value="357" >外国語科目群、中国語</option>
+                        <option value="358" >外国語科目群、ロシア語</option>
+                        <option value="359" >外国語科目群、イタリア語</option>
+                        <option value="360" >外国語科目群、スペイン語</option>
+                        <option value="361" >外国語科目群、朝鮮語</option>
+                        <option value="362" >外国語科目群、アラビア語</option>
+                        <option value="363" >外国語科目群、日本語</option>
+                        <option value="364" >情報学科目群</option>
+                        <option value="365" >健康・スポーツ科目群、健康・スポーツ科学</option>
+                        <option value="366" >健康・スポーツ科目群、スポーツ実習</option>
+                        <option value="368" >キャリア形成科目群、国際コミュニケーション</option>
+                        <option value="369" >キャリア形成科目群、学芸員課程</option>
+                        <option value="370" >キャリア形成科目群、地域連携</option>
+                        <option value="371" >キャリア形成科目群、その他キャリア形成</option>
+                        <option value="406" >キャリア形成科目群、多文化理解</option>
+                        <option value="372" >統合科学科目群、統合科学</option>
+                        <option value="373" >統合科学科目群、環境</option>
+                        <option value="374" >統合科学科目群、森里海連環学</option>
+                        <option value="375" >統合科学科目群、その他統合科学</option>
+                        <option value="376" >少人数教育科目群</option>
+                        <option value="386" >大学院共通科目群、社会適合</option>
+                        <option value="387" >大学院共通科目群、情報テクノサイエンス</option>
+                        <option value="388" >大学院共通科目群、コミュニケーション</option>
+                        <option value="389" >大学院横断教育科目群、人文社会科学系</option>
+                        <option value="390" >大学院横断教育科目群、自然科学系</option>
+                        <option value="391" >大学院横断教育科目群、統計・情報・データ科学系</option>
+                        <option value="392" >大学院横断教育科目群、健康・医療系</option>
+                        <option value="393" >大学院横断教育科目群、キャリア形成系</option>
+                        <option value="394" >大学院横断教育科目群、複合領域系</option>
+                        </select>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="width: 6em; background-color: #7092BD;font-size: 110%; text-align: center">レベル</td>
+                    <td>
+                      <select name="condition.numberingLevelNo" style="width: 100%">
+                        <option value="">---</option>
+                        <option value="1" >導入的な内容の科目（学部科目）</option>
+                        <option value="2" >基礎的な内容の科目（学部科目）</option>
+                        <option value="8" >大学院共通内容の科目（大学院科目）</option>
+                        </select>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="width: 6em; background-color: #7092BD;font-size: 110%; text-align: center">授業形態</td>
+                    <td>
+                      <select name="condition.numberingJugyokeitaiNo" style="width: 100%">
+                        <option value="">---</option>
+                        <option value="1" >講義</option>
+                        <option value="2" >演習</option>
+                        <option value="3" >実習</option>
+                        <option value="4" >実験</option>
+                        <option value="7" >その他</option>
+                        </select>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="width: 6em; background-color: #7092BD;font-size: 110%; text-align: center">言語</td>
+                    <td>
+                      <select name="condition.numberingLanguageNo" style="width: 100%">
+                        <option value="">---</option>
+                        <option value="1" >日本語</option>
+                        <option value="2" >英語</option>
+                        <option value="3" >バイリンガル</option>
+                        <option value="4" >その他</option>
+                        </select>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="width: 6em; background-color: #7092BD;font-size: 110%; text-align: center">学問分野</td>
+                    <td>
+                      <select name="condition.numberingBunkaNo" style="width: 100%">
+                        <option value="">---</option>
+                        <option value="1" >情報学基礎</option>
+                        <option value="2" >計算基盤</option>
+                        <option value="3" >人間情報学</option>
+                        <option value="4" >情報学フロンティア</option>
+                        <option value="5" >地球環境学</option>
+                        <option value="8" >環境創成学</option>
+                        <option value="9" >デザイン学</option>
+                        <option value="10" >生活科学</option>
+                        <option value="11" >科学教育・教育工学</option>
+                        <option value="13" >文化財科学・博物館学</option>
+                        <option value="14" >地理学</option>
+                        <option value="15" >社会・安全システム科学</option>
+                        <option value="16" >人間医工学</option>
+                        <option value="17" >健康・スポーツ科学</option>
+                        <option value="19" >エネルギー科学</option>
+                        <option value="22" >地域研究</option>
+                        <option value="23" >ジェンダー</option>
+                        <option value="24" >観光学</option>
+                        <option value="25" >哲学</option>
+                        <option value="26" >芸術学</option>
+                        <option value="27" >文学</option>
+                        <option value="28" >言語学</option>
+                        <option value="29" >史学</option>
+                        <option value="30" >人文地理学</option>
+                        <option value="31" >文化人類学</option>
+                        <option value="32" >法学</option>
+                        <option value="33" >政治学</option>
+                        <option value="34" >経済学</option>
+                        <option value="35" >経営学</option>
+                        <option value="36" >社会学</option>
+                        <option value="37" >心理学</option>
+                        <option value="38" >教育学</option>
+                        <option value="39" >外国語</option>
+                        <option value="40" >スポーツ実習</option>
+                        <option value="41" >ILASセミナー（教養・共通教育）</option>
+                        <option value="45" >計算科学</option>
+                        <option value="46" >数学</option>
+                        <option value="47" >天文学</option>
+                        <option value="48" >物理学</option>
+                        <option value="49" >地球惑星科学</option>
+                        <option value="51" >基礎化学</option>
+                        <option value="52" >複合化学</option>
+                        <option value="54" >神経科学</option>
+                        <option value="57" >ゲノム科学</option>
+                        <option value="59" >生物科学</option>
+                        <option value="60" >基礎生物学</option>
+                        <option value="61" >人類学</option>
+                        <option value="63" >電気電子工学</option>
+                        <option value="64" >土木工学</option>
+                        <option value="65" >建築学</option>
+                        <option value="67" >プロセス・化学工学</option>
+                        <option value="68" >総合工学</option>
+                        <option value="69" >生産環境農学</option>
+                        <option value="70" >農芸化学</option>
+                        <option value="71" >森林圏科学</option>
+                        <option value="72" >水圏応用科学</option>
+                        <option value="73" >社会経済農学</option>
+                        <option value="76" >境界農学</option>
+                        <option value="77" >薬学</option>
+                        <option value="78" >基礎医学</option>
+                        <option value="80" >境界医学</option>
+                        <option value="81" >社会医学</option>
+                        <option value="86" >総合生存学</option>
+                        </select>
+                    </td>
+                  </tr>
+                </table>
+
+                <table style="width: 100%">
+                    <tr>
+                      <td class="th_normal" id="work_experience"><span class="">実務経験のある教員による授業科目</span></td>
+                    </tr>
+                    <tr>
+                      <td class="odd_normal">
+                        <input type="checkbox" name="condition.workExperiences[1]" value="true"  id="workExperience_1">
+                          <label for="workExperience_1">1. 実務経験のある教員による実務経験を活かした授業科目</label><br />
+                        <input type="checkbox" name="condition.workExperiences[2]" value="true"  id="workExperience_2">
+                          <label for="workExperience_2">2. オムニバス形式で多様な企業等から講師・ゲストスピーカー等を招いた授業科目</label><br />
+                        <input type="checkbox" name="condition.workExperiences[3]" value="true"  id="workExperience_3">
+                          <label for="workExperience_3">3. 学外での実習等を授業として位置付けている授業科目</label><br />
+                        <input type="checkbox" name="condition.workExperiences[4]" value="true"  id="workExperience_4">
+                          <label for="workExperience_4">4. 資格取得に関する授業科目のうち、当該資格の実務に関する授業科目</label><br />
+                        <input type="checkbox" name="condition.workExperiences[5]" value="true"  id="workExperience_5">
+                          <label for="workExperience_5">5. 1.～4.以外の実務に関する授業科目</label><br />
+                        </td>
+                    </tr>
+                </table>
+
+              </td>
+            </tr>
+
+            <tr><td align="center" colspan="4" class="th_top_normal"></td></tr>
+
+            <tr>
+            	<td colspan="4" align="center">
+                    <br />
+                    <a href="#"  onClick="clearCourseSearchForm();return false;"  id="id_a_1229_31" ><img src="/img/button_clear.gif" alit="クリア" border="0" id="id_img_1229_3" ></a>
+                    &nbsp;&nbsp;
+                    <input type="image" src="/img/button_search.gif" alt="検索" id="id_input_1229_32" >
+                </td>
+            </tr>
+          </table>
+
+        </form>
+
+</center>
+      </div>
+      <div id="gakubu_form">
+        <center >
+          <script type="text/javascript">
+	function clearCourseSearchFormGakubu() {
+	    
+	    jQuery('#week_schedule_holder_gakubu input').each(function(){
+	    	this.checked = false;
+	    });
+	
+	    jQuery('#family_holder input').each(function(){
+	    	this.checked = false;
+	    });
+	    
+	    jQuery('input[@type=text]').each(function(){
+	      this.value = '';
+	    });
+	    jQuery('#select_semester_gakubu')[0].selectedIndex = 0;
+	    jQuery('#select_discipline_gakubu')[0].selectedIndex = 0;
+	    jQuery('#select_grade_gakubu')[0].selectedIndex = 0;
+	}
+
+function checkAllDaysGakubu() {
+	
+    var inputs = jQuery('#week_schedule_holder_gakubu input');
+    
+    var all = true;
+    inputs.each(function(){
+    	if (!this.checked) {
+    		all = false;
+		}
+    });
+    
+    if (all) {
+    	inputs.each(function(){this.checked = false;});
+    } else {
+    	inputs.each(function(){this.checked = true;});
+	}
+}
+
+jQuery(function() {
+  var numbering_search_detail_open_gakubu = false;
+
+  function openNumberingSearchDetailGakubu() {
+    jQuery("#numbering_search_body_gakubu").show();
+    jQuery("#numbering_header_gakubu").attr("rowspan", 2);
+    numbering_search_detail_open_gakubu = true;
+  }
+
+  function closeNumberingSearchDetailGakubu() {
+    jQuery("#numbering_search_body_gakubu").hide();
+    jQuery("#numbering_header_gakubu").attr("rowspan", 1);
+    numbering_search_detail_open_gakubu = false;
+  }
+
+  jQuery("#numbering_search_detail_gakubu").click(function() {
+    
+    if (numbering_search_detail_open_gakubu) {
+      closeNumberingSearchDetailGakubu();
+    } else {
+      openNumberingSearchDetailGakubu();
+    }
+  });
+  
+});
+</script>
+    <form action="lecture_search_gakubu" method="get" name="detail_search" id="id_form_282_0" >
+      <input type="hidden" name="studentNo" value="" />
+        <table class="form_table" style="width: 570" >
+        <tr class="form_tab"><td colspan="4">
+	            <table class="buttonList"><tr>
+	            <td>
+	            <a href="" id="la_form_tab" ><img src="/img/tab_search_zn_x.gif" /></a>
+	            </td>
+	            <td>
+	            <img src="/img/tab_search_sn_o.gif" />
+	            </td>
+	            </tr></table>
+            </td></tr>
+        <tr><td bgcolor="#9DA0B4" class="th_top_normal" align="center" colspan="4"></td></tr>
+
+            <tr>
+
+              <td align="center" class="th_normal"><span class="">開講期</span></td>
+              <td class="odd_normal">
+
+                <select name="condition.semester" id="select_semester_gakubu">
+                  <option value="" class="form_disable">----</option>
+                  </select>
+
+              </td>
+
+              <td align="center" class="th_normal" rowspan="7" nowrap><span class="">曜時限</span></td>
+              <td class="odd_normal" rowspan="7" align="center">
+
+                <table border="0" width="0" cellspacing="0" cellpadding="0">
+
+                  <tr>
+                    <td align="center" colspan="7">
+
+                      <table border="0" class="timetable_table" width="0" cellspacing="" cellpadding="2" style="margin-top:5px" id="week_schedule_holder_gakubu">
+                        <tr class="th_normal " align="center">
+                          <td class="timetable_sell"><img src="/img/0.gif" width="1" height="1" alt="" id="id_img_282_0" ></td>
+                          <td class="timetable_sell">1</td>
+                          <td class="timetable_sell">2</td>
+                          <td class="timetable_sell">3</td>
+                          <td class="timetable_sell">4</td>
+                          <td class="timetable_sell">5</td>
+                        </tr>
+
+                        <tr class="" align="center">
+                          <td class="th_normal timetable_sell">月</td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[11]" value="true"  id="id_input_282_1" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[12]" value="true"  id="id_input_282_2" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[13]" value="true"  id="id_input_282_3" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[14]" value="true"  id="id_input_282_4" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[15]" value="true"  id="id_input_282_5" ></td>
+                        </tr>
+
+                        <tr class="" align="center">
+                          <td class="th_normal timetable_sell">火</td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[21]" value="true"  id="id_input_282_6" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[22]" value="true"  id="id_input_282_7" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[23]" value="true"  id="id_input_282_8" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[24]" value="true"  id="id_input_282_9" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[25]" value="true"  id="id_input_282_10" ></td>
+                        </tr>
+
+                        <tr class="" align="center">
+                          <td class="th_normal timetable_sell">水</td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[31]" value="true"  id="id_input_282_11" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[32]" value="true"  id="id_input_282_12" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[33]" value="true"  id="id_input_282_13" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[34]" value="true"  id="id_input_282_14" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[35]" value="true"  id="id_input_282_15" ></td>
+                        </tr>
+
+                        <tr class="" align="center">
+                          <td class="th_normal timetable_sell">木</td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[41]" value="true"  id="id_input_282_16" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[42]" value="true"  id="id_input_282_17" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[43]" value="true"  id="id_input_282_18" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[44]" value="true"  id="id_input_282_19" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[45]" value="true"  id="id_input_282_20" ></td>
+                        </tr>
+
+                        <tr class="" align="center">
+                          <td class="th_normal timetable_sell">金</td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[51]" value="true"  id="id_input_282_21" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[52]" value="true"  id="id_input_282_22" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[53]" value="true"  id="id_input_282_23" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[54]" value="true"  id="id_input_282_24" ></td>
+                          <td class="timetable_sell"><input type="checkbox" name="condition.weekSchedule[55]" value="true"  id="id_input_282_25" ></td>
+                        </tr>
+                        <tr class="" align="center">
+                          <td class="th_normal timetable_sell">集<br />中<br />等</td>
+                          <td class="timetable_sell">
+                            <input type="checkbox" name="condition.syutyu" value="true"   id="id_input_1370_26" />
+                          </td>
+                          <td class="timetable_sell" colspan="4"></td>
+                        </tr>
+
+                      </table>
+                      <a href="#" onClick="checkAllDaysGakubu(); return false;" id="id_a_282_26" ><img src="/img/button_mini_select_all_days.gif" width="129" height="22" alt="" border="0" style="margin-top:5px" name="select_all" id="id_img_282_1" ></a>
+                    </td>
+                  </tr>
+                </table>
+
+              </td>
+            </tr>
+
+            <tr>
+              <td align="center" class="th_normal"><img src="/img/0.gif" width="1" height="5" alt="" id="id_img_282_2" >対象学科<br />(専攻)</td>
+
+              <td class="odd_normal">
+                <select name="condition.disciplineSet" id="select_discipline_gakubu">
+                  <option value="0" class="form_disable">----</option>
+                  </select>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" class="th_normal"><span class="">配当回生</span></td>
+              <td class="odd_normal">
+                <select name="condition.grade" id="select_grade_gakubu">
+                  <option value="0" class="form_disable">----</option>
+                  </select>
+                ※履修可能となる回生で検索します。
+              </td>
+            </tr>
+
+            <tr>
+              <td align="center" class="th_normal"><span class="">科目名</span></td>
+              <td class="odd_normal"><input id="course_title" name="condition.courseTitle" type="text" size="25" value="">
+                <br />* ローマ数字は、下記の通りアルファベットへ変換して検索してください。<br />　I:I(アイ) 、II:II(アイアイ)、IV:IV(アイヴイ)
+              </td>
+            </tr>
+            <tr>
+              <td align="center" class="th_normal"><span class="">担当教員</span></td>
+              <td class="odd_normal"><input id="teacher_name" name="condition.teacherName" type="text" size="25" value=""><br /><span class="x90">姓と名の間にはスペースを入れてください。</span></td>
+            </tr>
+
+            <tr>
+              <td align="center" class="th_normal">講義コード</td>
+              <td class="odd_normal"><input id="teacher_name" name="condition.lectureCode"  style="ime-mode: disabled" type="text" size="25" value=""></td>
+            </tr>
+
+            <tr>
+                <td align="center" class="th_normal" id="numbering_header_gakubu"><span class="">詳細検索</span></td>
+                <td class="odd_normal">
+                  <table style="width: 100%">
+                    <tr>
+                      <td style="vertical-align: middle">
+                        <div id="numbering_search_detail_gakubu" style="display: inline-block;">
+                          <div style="display: inline-block; cursor: pointer; white-space: nowrap;">
+<div style="float: left; background-image: url('/img/button/button_medium_green_left.png'); display: inline-block; width: 11px; height: 28px;"></div>
+<div style="color: #202020; padding-left: 4px; padding-right: 4px; text-shadow: 1px 1px 1px #949494, 0px 2px 3px white, 0px -2px 3px white, -2px 0px 3px white, 2px 0px 3px white, 2px 2px 3px white, -2px 2px 3px white, 2px -2px 3px white, -2px -2px 3px white; font-family: 'KulasisWebFont'; line-height: 28px; font-size: 13px; font-weight: 500; float: left; background-image: url('/img/button/button_medium_green_center.png'); display: inline-block; height: 28px;">
+検索条件
+</div>
+<div style="float: left; background-image: url('/img/button/button_medium_green_right.png'); display: inline-block; width: 11px; height: 28px;"></div>
+</div><br />
+                          科目ナンバリング、実務科目（大学院科目非対応）等の検索が可能です。
+                        </div>
+                      </td>
+                      <td style="vertical-align: middle; text-align: right">
+                        </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+            <tr style="display: none" id="numbering_search_body_gakubu">
+                <td class="odd_normal" colspan="3">
+
+                <table style="width: 100%">
+                    <tr>
+                      <td class="th_normal"><span class="">科目ナンバリング</span></td>
+                    </tr>
+                </table>
+
+                <table style="width: 100%">
+                  <tr>
+                    <td style="width: 6em; background-color: #7092BD;font-size: 110%; text-align: center">課程</td>
+                    <td>
+                      <select name="condition.numberingKateiNo" style="width: 100%">
+                        <option value="">---</option>
+                        <option value="1" >学部（全学共通科目を含む）</option>
+                        </select>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="width: 6em; background-color: #7092BD;font-size: 110%; text-align: center">開講部局等</td>
+                    <td>
+                      <select name="condition.numberingDepartmentNo" style="width: 100%">
+                        <option value="">---</option>
+                        <option value="9" >工学部・工学研究科</option>
+                        </select>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="width: 6em; background-color: #7092BD;font-size: 110%; text-align: center">学科等</td>
+                    <td>
+                      <select name="condition.numberingDisciplineNo" style="width: 100%">
+                        <option value="">---</option>
+                        <option value="67" >工学部共通</option>
+                        <option value="68" >地球工学科</option>
+                        <option value="69" >建築学科</option>
+                        <option value="70" >物理工学科</option>
+                        <option value="71" >電気電子工学科</option>
+                        <option value="72" >理工化学科</option>
+                        <option value="73" >情報学科</option>
+                        </select>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="width: 6em; background-color: #7092BD;font-size: 110%; text-align: center">レベル</td>
+                    <td>
+                      <select name="condition.numberingLevelNo" style="width: 100%">
+                        <option value="">---</option>
+                        <option value="1" >導入的な内容の科目（学部科目）</option>
+                        <option value="2" >基礎的な内容の科目（学部科目）</option>
+                        <option value="3" >発展的な内容の科目（学部科目）</option>
+                        <option value="4" >卒業論文・卒業研究関連の科目（学部科目）</option>
+                        </select>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="width: 6em; background-color: #7092BD;font-size: 110%; text-align: center">授業形態</td>
+                    <td>
+                      <select name="condition.numberingJugyokeitaiNo" style="width: 100%">
+                        <option value="">---</option>
+                        <option value="1" >講義</option>
+                        <option value="2" >演習</option>
+                        <option value="3" >実習</option>
+                        <option value="4" >実験</option>
+                        <option value="6" >卒業研究等</option>
+                        </select>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="width: 6em; background-color: #7092BD;font-size: 110%; text-align: center">言語</td>
+                    <td>
+                      <select name="condition.numberingLanguageNo" style="width: 100%">
+                        <option value="">---</option>
+                        <option value="1" >日本語</option>
+                        <option value="2" >英語</option>
+                        <option value="3" >バイリンガル</option>
+                        </select>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="width: 6em; background-color: #7092BD;font-size: 110%; text-align: center">学問分野</td>
+                    <td>
+                      <select name="condition.numberingBunkaNo" style="width: 100%">
+                        <option value="">---</option>
+                        <option value="1" >情報学基礎</option>
+                        <option value="2" >計算基盤</option>
+                        <option value="3" >人間情報学</option>
+                        <option value="4" >情報学フロンティア</option>
+                        <option value="5" >地球環境学</option>
+                        <option value="6" >環境解析学</option>
+                        <option value="7" >環境保全学</option>
+                        <option value="8" >環境創成学</option>
+                        <option value="15" >社会・安全システム科学</option>
+                        <option value="16" >人間医工学</option>
+                        <option value="19" >エネルギー科学</option>
+                        <option value="39" >外国語</option>
+                        <option value="42" >ナノ･マイクロ科学</option>
+                        <option value="43" >応用物理学</option>
+                        <option value="44" >量子ビーム科学</option>
+                        <option value="45" >計算科学</option>
+                        <option value="46" >数学</option>
+                        <option value="48" >物理学</option>
+                        <option value="49" >地球惑星科学</option>
+                        <option value="50" >プラズマ科学</option>
+                        <option value="51" >基礎化学</option>
+                        <option value="52" >複合化学</option>
+                        <option value="53" >材料化学</option>
+                        <option value="57" >ゲノム科学</option>
+                        <option value="59" >生物科学</option>
+                        <option value="62" >機械工学</option>
+                        <option value="63" >電気電子工学</option>
+                        <option value="64" >土木工学</option>
+                        <option value="65" >建築学</option>
+                        <option value="66" >材料工学</option>
+                        <option value="67" >プロセス・化学工学</option>
+                        <option value="68" >総合工学</option>
+                        <option value="81" >社会医学</option>
+                        </select>
+                    </td>
+                  </tr>
+                </table>
+
+                <table style="width: 100%">
+                  <tr>
+                    <td class="th_normal" id="work_experience"><span class="">実務経験のある教員による授業科目</span></td>
+                  </tr>
+                  <tr>
+                    <td class="odd_normal">
+                      <input type="checkbox" name="condition.workExperiences[1]" value="true"  id="workExperience_1">
+                        <label for="workExperience_1">1. 実務経験のある教員による実務経験を活かした授業科目</label><br />
+                      <input type="checkbox" name="condition.workExperiences[2]" value="true"  id="workExperience_2">
+                        <label for="workExperience_2">2. オムニバス形式で多様な企業等から講師・ゲストスピーカー等を招いた授業科目</label><br />
+                      <input type="checkbox" name="condition.workExperiences[3]" value="true"  id="workExperience_3">
+                        <label for="workExperience_3">3. 学外での実習等を授業として位置付けている授業科目</label><br />
+                      <input type="checkbox" name="condition.workExperiences[4]" value="true"  id="workExperience_4">
+                        <label for="workExperience_4">4. 資格取得に関する授業科目のうち、当該資格の実務に関する授業科目</label><br />
+                      <input type="checkbox" name="condition.workExperiences[5]" value="true"  id="workExperience_5">
+                        <label for="workExperience_5">5. 1.～4.以外の実務に関する授業科目</label><br />
+                      </td>
+                  </tr>
+                </table>
+
+              </td>
+            </tr>
+
+
+            <tr><td align="center" colspan="4" class="th_top_normal"></td></tr>
+            <tr>
+            	<td colspan="4" align="center">
+                    <br />
+                    <a href="#"  onClick="clearCourseSearchFormGakubu();return false;"  id="id_a_282_27" ><img src="/img/button_clear.gif" alit="クリア" border="0" id="id_img_282_3" ></a>
+                    &nbsp;&nbsp;
+                    <input type="image" src="/img/button_search.gif" alt="検索" id="id_input_282_28" >
+                </td>
+            </tr>
+          </table>
+
+        </form>
+
+</center>
+      </div>
+    </div>
+    <script type="text/javascript">
+	  // フォーム切り替え
+	  jQuery(function initFormSwitcher() {
+	    var formSwitcher = createFormSwitcher(["la_form", "gakubu_form"]);
+	    formSwitcher.switchForm("la_form");
+	  });
+	  
+	  function createFormSwitcher(formIds) {
+	    function switchForm(enableFormId) {
+	      
+	      jQuery.each(formIds, function() {
+		      jQuery('#' + this).hide();
+	      });
+	      if (enableFormId) {
+		      jQuery('#' + enableFormId).show();
+	      }
+	    }
+	    
+	    jQuery.each(formIds, function() {
+	      var enableFormId = this;
+	      var url = "lecture_search" + "_gakubu" + "?" + "condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1";
+	      jQuery('#' + enableFormId + '_tab').attr("href", url);
+	      
+	      /*
+	      jQuery('#' + enableFormId + '_tab').click(function() {
+	        switchForm(enableFormId);
+	        return false;
+	      });
+	      */
+	    });
+	  
+	    return {
+	      switchForm: switchForm
+	    }
+	  }
+  </script>
+  
+  
+  
+</center>
+
+  <br />
+      <div class="content">
+        <div class="explanation">
+          <img src="/img/subheading_search_result.gif" alt="検索結果" id="id_img_1225_2" ><br />
+          検索結果は全部で<b>796</b>件です。
+        </div>
+
+
+        <br />
+
+        <center>
+  
+              <table border="0" cellspacing="0" cellpadding="3">
+                <tr class="">
+      
+                  <td nowrap>
+                    
+                            前の30件
+                        </td>
+                  <td ><a href="lecture_search?condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" class="pager_link" style="color: red" >1</a>&nbsp;</td>
+                  <td ><a href="lecture_search?condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=2" class="pager_link"  >2</a>&nbsp;</td>
+                  <td ><a href="lecture_search?condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=3" class="pager_link"  >3</a>&nbsp;</td>
+                  <td ><a href="lecture_search?condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=4" class="pager_link"  >4</a>&nbsp;</td>
+                  <td ><a href="lecture_search?condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=5" class="pager_link"  >5</a>&nbsp;</td>
+                  <td ><a href="lecture_search?condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=6" class="pager_link"  >6</a>&nbsp;</td>
+                  <td nowrap>
+                    <a href="lecture_search?condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=2" class="pager_link" id="id_a_1261_2" >次の30件</a>
+                        </td>
+      
+                </tr>
+              </table>
+          </center>
+  
+        
+        
+
+
+
+<center>
+          <!-- search result -->
+          <table class="standard_list">
+
+
+            <tr><td bgcolor="#9DA0B4" class="th_top_normal" align="center" colspan="10"></td></tr>
+            <tr class="th_normal">
+              <td nowrap width="90">講義コード</td>
+              <td nowrap width="90">科目名</td>
+              <td nowrap width="80">担当教員</td>
+              <td nowrap width="40">曜時限</td>
+              <td nowrap width="40">教室名</td>
+              <td nowrap width="40">開講期</td>
+              <td nowrap width="40">群</td>
+              <td nowrap width="30">旧群</td>
+              <td nowrap width="60">申込者数/定員</td>
+              <td nowrap width="70">
+              </td>
+            </tr>
+
+            <tr class="odd_normal">
+                <td>
+                  N276001</td>
+                <td>Advanced Dynamics-E2 </td>
+                <td>
+                  AMAR，Julien Samuel</td>
+                <td>
+                  火4</td>
+                <td>
+                  4共32</td>
+                <td>
+                  後期</td>
+                <td>
+                  自然群</td>
+                <td>
+                  B群</td>
+                <td>
+                  21/60</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=64121&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <form action="candidate_add" method="post" class="candidate-add-form fcfs_candidate_add_form">
+                          <input type="hidden" name="lectureNo" value="64121" />
+                            <input type="image" src="/img/button_mini_add.gif" alt="追加"  id="id_img_1225_4" />
+                          </form>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=22448', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="even_normal">
+                <td>
+                  H716001</td>
+                <td>Advanced Lecture for Pedagogy II-E2 </td>
+                <td>
+                  BROTHERHOOD Thomas</td>
+                <td>
+                  水1</td>
+                <td>
+                  共北21</td>
+                <td>
+                  後期</td>
+                <td>
+                  人社群</td>
+                <td>
+                  A群</td>
+                <td>
+                  17/52</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=62419&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <form action="candidate_add" method="post" class="candidate-add-form fcfs_candidate_add_form">
+                          <input type="hidden" name="lectureNo" value="62419" />
+                            <input type="image" src="/img/button_mini_add.gif" alt="追加"  id="id_img_1225_4" />
+                          </form>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=22063', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="odd_normal">
+                <td>
+                  W237001</td>
+                <td>Advanced Scientific English-E3 (Debate)2T25</td>
+                <td>
+                  SCHMOECKER，Jan-Dirk<br />AN，Lin<br />CHANG，Kai-Chun<br />KHAYYER，Abbas<br />KIM，SUNMIN<br />QURESHI，Ali Gul<br />ZHU Fan</td>
+                <td>
+                  水2</td>
+                <td>
+                  共北23</td>
+                <td>
+                  後期</td>
+                <td>
+                  キャリア群</td>
+                <td>
+                  C群</td>
+                <td>
+                  19/32</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=64195&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <form action="candidate_add" method="post" class="candidate-add-form fcfs_candidate_add_form">
+                          <input type="hidden" name="lectureNo" value="64195" />
+                            <input type="image" src="/img/button_mini_add.gif" alt="追加"  id="id_img_1225_4" />
+                          </form>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=22482', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="even_normal">
+                <td>
+                  H944001</td>
+                <td>An International History of East Asia 1839-1945-E2 </td>
+                <td>
+                  MURPHY, Mahon</td>
+                <td>
+                  火3</td>
+                <td>
+                  共北38</td>
+                <td>
+                  後期</td>
+                <td>
+                  人社群</td>
+                <td>
+                  A群</td>
+                <td>
+                  21/59</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=63938&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <form action="candidate_add" method="post" class="candidate-add-form fcfs_candidate_add_form">
+                          <input type="hidden" name="lectureNo" value="63938" />
+                            <input type="image" src="/img/button_mini_add.gif" alt="追加"  id="id_img_1225_4" />
+                          </form>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=22369', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="odd_normal">
+                <td>
+                  N394001</td>
+                <td>Analytical Chemistry and Forensic Science-E2 </td>
+                <td>
+                  MURDEY，Richard James</td>
+                <td>
+                  月5</td>
+                <td>
+                  共東22</td>
+                <td>
+                  後期</td>
+                <td>
+                  自然群</td>
+                <td>
+                  B群</td>
+                <td>
+                  52/52</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=64331&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <img src="/img/button_mini_add_disable.gif" >
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=22518', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="even_normal">
+                <td>
+                  H947001</td>
+                <td>Applied Game Theory-E2 </td>
+                <td>
+                  李　晨</td>
+                <td>
+                  月3</td>
+                <td>
+                  4共25</td>
+                <td>
+                  後期</td>
+                <td>
+                  人社群</td>
+                <td>
+                  A群</td>
+                <td>
+                  24/24</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=64051&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <img src="/img/button_mini_add_disable.gif" >
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=22420', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="odd_normal">
+                <td>
+                  H947002</td>
+                <td>Applied Game Theory-E2 </td>
+                <td>
+                  李　晨</td>
+                <td>
+                  月4</td>
+                <td>
+                  4共25</td>
+                <td>
+                  後期</td>
+                <td>
+                  人社群</td>
+                <td>
+                  A群</td>
+                <td>
+                  24/24</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=64052&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <img src="/img/button_mini_add_disable.gif" >
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=22420', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="even_normal">
+                <td>
+                  N941001</td>
+                <td>Basic Biology and Metabolism-E2 </td>
+                <td>
+                  MACPHERSON TOM</td>
+                <td>
+                  火4</td>
+                <td>
+                  共北3B</td>
+                <td>
+                  後期</td>
+                <td>
+                  自然群</td>
+                <td>
+                  B群</td>
+                <td>
+                  18/45</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=64116&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <form action="candidate_add" method="post" class="candidate-add-form fcfs_candidate_add_form">
+                          <input type="hidden" name="lectureNo" value="64116" />
+                            <input type="image" src="/img/button_mini_add.gif" alt="追加"  id="id_img_1225_4" />
+                          </form>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=22443', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="odd_normal">
+                <td>
+                  N912001</td>
+                <td>Basic Genetic Engineering-E2 </td>
+                <td>
+                  Adam Tsuda GUY</td>
+                <td>
+                  水2</td>
+                <td>
+                  1共04</td>
+                <td>
+                  後期</td>
+                <td>
+                  自然群</td>
+                <td>
+                  B群</td>
+                <td>
+                  5/36</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=62107&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <form action="candidate_add" method="post" class="candidate-add-form fcfs_candidate_add_form">
+                          <input type="hidden" name="lectureNo" value="62107" />
+                            <input type="image" src="/img/button_mini_add.gif" alt="追加"  id="id_img_1225_4" />
+                          </form>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=21901', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="even_normal">
+                <td>
+                  N369001</td>
+                <td>Basic Organic Chemistry II-E2 </td>
+                <td>
+                  SINGH, Vaibhav Pal</td>
+                <td>
+                  火4</td>
+                <td>
+                  4共12</td>
+                <td>
+                  後期</td>
+                <td>
+                  自然群</td>
+                <td>
+                  B群</td>
+                <td>
+                  21/60</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=62112&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <form action="candidate_add" method="post" class="candidate-add-form fcfs_candidate_add_form">
+                          <input type="hidden" name="lectureNo" value="62112" />
+                            <input type="image" src="/img/button_mini_add.gif" alt="追加"  id="id_img_1225_4" />
+                          </form>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=21906', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="odd_normal">
+                <td>
+                  N369002</td>
+                <td>Basic Organic Chemistry II-E2 </td>
+                <td>
+                  Juha Lintuluoto</td>
+                <td>
+                  木2</td>
+                <td>
+                  総合研究9号館西棟W1講義室</td>
+                <td>
+                  後期</td>
+                <td>
+                  自然群</td>
+                <td>
+                  B群</td>
+                <td>
+                  9/60</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=62376&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <form action="candidate_add" method="post" class="candidate-add-form fcfs_candidate_add_form">
+                          <input type="hidden" name="lectureNo" value="62376" />
+                            <input type="image" src="/img/button_mini_add.gif" alt="追加"  id="id_img_1225_4" />
+                          </form>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=21906', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="even_normal">
+                <td>
+                  N366004</td>
+                <td>Basic Physical Chemistry (quantum theory)-E2 </td>
+                <td>
+                  ARIVAZHAGAN RAJENDRAN</td>
+                <td>
+                  火2</td>
+                <td>
+                  4共14</td>
+                <td>
+                  後期</td>
+                <td>
+                  自然群</td>
+                <td>
+                  B群</td>
+                <td>
+                  4/60</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=62128&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <form action="candidate_add" method="post" class="candidate-add-form fcfs_candidate_add_form">
+                          <input type="hidden" name="lectureNo" value="62128" />
+                            <input type="image" src="/img/button_mini_add.gif" alt="追加"  id="id_img_1225_4" />
+                          </form>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=21919', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="odd_normal">
+                <td>
+                  N365002</td>
+                <td>Basic Physical Chemistry (thermodynamics)-E2 </td>
+                <td>
+                  Nguyen Thanh Phuc</td>
+                <td>
+                  水1</td>
+                <td>
+                  共北33</td>
+                <td>
+                  後期</td>
+                <td>
+                  自然群</td>
+                <td>
+                  B群</td>
+                <td>
+                  59/59</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=63736&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <img src="/img/button_mini_add_disable.gif" >
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=21918', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="even_normal">
+                <td>
+                  N926001</td>
+                <td>Biological Sciences through Scientific Articles II-E2 </td>
+                <td>
+                  TAKENAKA，Mizuki</td>
+                <td>
+                  火5</td>
+                <td>
+                  共北33</td>
+                <td>
+                  後期</td>
+                <td>
+                  自然群</td>
+                <td>
+                  B群</td>
+                <td>
+                  36/59</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=63816&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <form action="candidate_add" method="post" class="candidate-add-form fcfs_candidate_add_form">
+                          <input type="hidden" name="lectureNo" value="63816" />
+                            <input type="image" src="/img/button_mini_add.gif" alt="追加"  id="id_img_1225_4" />
+                          </form>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=22282', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="odd_normal">
+                <td>
+                  W228002</td>
+                <td>Business English-E3 </td>
+                <td>
+                  WILLIAM BABER</td>
+                <td>
+                  水5</td>
+                <td>
+                  総人1305</td>
+                <td>
+                  後期</td>
+                <td>
+                  キャリア群</td>
+                <td>
+                  </td>
+                <td>
+                  15/59</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=63504&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <form action="candidate_add" method="post" class="candidate-add-form fcfs_candidate_add_form">
+                          <input type="hidden" name="lectureNo" value="63504" />
+                            <input type="image" src="/img/button_mini_add.gif" alt="追加"  id="id_img_1225_4" />
+                          </form>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=22178', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="even_normal">
+                <td>
+                  N386001</td>
+                <td>Chemistry for non-science majors II-E2 </td>
+                <td>
+                  PINCELLA，Francesca</td>
+                <td>
+                  木4</td>
+                <td>
+                  共北11</td>
+                <td>
+                  後期</td>
+                <td>
+                  自然群</td>
+                <td>
+                  B群</td>
+                <td>
+                  9/35</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=64055&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <form action="candidate_add" method="post" class="candidate-add-form fcfs_candidate_add_form">
+                          <input type="hidden" name="lectureNo" value="64055" />
+                            <input type="image" src="/img/button_mini_add.gif" alt="追加"  id="id_img_1225_4" />
+                          </form>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=22423', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="odd_normal">
+                <td>
+                  N367001</td>
+                <td>Chemistry of Sustainable Energy-E2 </td>
+                <td>
+                  ARIVAZHAGAN RAJENDRAN</td>
+                <td>
+                  火3</td>
+                <td>
+                  4共14</td>
+                <td>
+                  後期</td>
+                <td>
+                  自然群</td>
+                <td>
+                  B群</td>
+                <td>
+                  11/60</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=62129&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <form action="candidate_add" method="post" class="candidate-add-form fcfs_candidate_add_form">
+                          <input type="hidden" name="lectureNo" value="62129" />
+                            <input type="image" src="/img/button_mini_add.gif" alt="追加"  id="id_img_1225_4" />
+                          </form>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=21920', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="even_normal">
+                <td>
+                  N387001</td>
+                <td>Chemistry on Natural and Human Environments-E2 </td>
+                <td>
+                  PINCELLA，Francesca</td>
+                <td>
+                  金4</td>
+                <td>
+                  共北27</td>
+                <td>
+                  後期</td>
+                <td>
+                  自然群</td>
+                <td>
+                  B群</td>
+                <td>
+                  20/45</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=64056&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <form action="candidate_add" method="post" class="candidate-add-form fcfs_candidate_add_form">
+                          <input type="hidden" name="lectureNo" value="64056" />
+                            <input type="image" src="/img/button_mini_add.gif" alt="追加"  id="id_img_1225_4" />
+                          </form>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=22424', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="odd_normal">
+                <td>
+                  H918001</td>
+                <td>Contemporary Economics II-E2 </td>
+                <td>
+                  Alireza  Naghavi</td>
+                <td>
+                  水3</td>
+                <td>
+                  共西12</td>
+                <td>
+                  後期</td>
+                <td>
+                  人社群</td>
+                <td>
+                  A群</td>
+                <td>
+                  60/60</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=62497&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <img src="/img/button_mini_add_disable.gif" >
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=22097', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="even_normal">
+                <td>
+                  H918002</td>
+                <td>Contemporary Economics II-E2 </td>
+                <td>
+                  Alireza  Naghavi</td>
+                <td>
+                  水4</td>
+                <td>
+                  共西12</td>
+                <td>
+                  後期</td>
+                <td>
+                  人社群</td>
+                <td>
+                  A群</td>
+                <td>
+                  58/60</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=62498&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <form action="candidate_add" method="post" class="candidate-add-form fcfs_candidate_add_form">
+                          <input type="hidden" name="lectureNo" value="62498" />
+                            <input type="image" src="/img/button_mini_add.gif" alt="追加"  id="id_img_1225_4" />
+                          </form>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=22097', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="odd_normal">
+                <td>
+                  H598002</td>
+                <td>Cultural Anthropology I-E2 </td>
+                <td>
+                  LOPEZ，Mario Ivan</td>
+                <td>
+                  火3</td>
+                <td>
+                  共北3A</td>
+                <td>
+                  後期</td>
+                <td>
+                  人社群</td>
+                <td>
+                  A群</td>
+                <td>
+                  19/35</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=63467&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <form action="candidate_add" method="post" class="candidate-add-form fcfs_candidate_add_form">
+                          <input type="hidden" name="lectureNo" value="63467" />
+                            <input type="image" src="/img/button_mini_add.gif" alt="追加"  id="id_img_1225_4" />
+                          </form>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=22156', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="even_normal">
+                <td>
+                  H598004</td>
+                <td>Cultural Anthropology I-E2 </td>
+                <td>
+                  De Antoni, Andrea</td>
+                <td>
+                  水2</td>
+                <td>
+                  4共33</td>
+                <td>
+                  後期</td>
+                <td>
+                  人社群</td>
+                <td>
+                  A群</td>
+                <td>
+                  6/40</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=63961&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <form action="candidate_add" method="post" class="candidate-add-form fcfs_candidate_add_form">
+                          <input type="hidden" name="lectureNo" value="63961" />
+                            <input type="image" src="/img/button_mini_add.gif" alt="追加"  id="id_img_1225_4" />
+                          </form>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=22156', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="odd_normal">
+                <td>
+                  U154001</td>
+                <td>Cultural Aspects of Health Care-E2 </td>
+                <td>
+                  ANAGNOSTOU，Despoina</td>
+                <td>
+                  木3</td>
+                <td>
+                  共北38</td>
+                <td>
+                  後期</td>
+                <td>
+                  健康群</td>
+                <td>
+                  </td>
+                <td>
+                  12/60</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=63866&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <form action="candidate_add" method="post" class="candidate-add-form fcfs_candidate_add_form">
+                          <input type="hidden" name="lectureNo" value="63866" />
+                            <input type="image" src="/img/button_mini_add.gif" alt="追加"  id="id_img_1225_4" />
+                          </form>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=22331', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="even_normal">
+                <td>
+                  HB02001</td>
+                <td>Culture and Traditions in Japan II </td>
+                <td>
+                  湯川　志貴子</td>
+                <td>
+                  月5</td>
+                <td>
+                  1共21</td>
+                <td>
+                  後期</td>
+                <td>
+                  人社群</td>
+                <td>
+                  A群</td>
+                <td>
+                  4/15</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=63491&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <form action="candidate_add" method="post" class="candidate-add-form fcfs_candidate_add_form">
+                          <input type="hidden" name="lectureNo" value="63491" />
+                            <input type="image" src="/img/button_mini_add.gif" alt="追加"  id="id_img_1225_4" />
+                          </form>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=22173', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="odd_normal">
+                <td>
+                  HB02002</td>
+                <td>Culture and Traditions in Japan II </td>
+                <td>
+                  仁平　千香子</td>
+                <td>
+                  金5</td>
+                <td>
+                  1共31</td>
+                <td>
+                  後期</td>
+                <td>
+                  人社群</td>
+                <td>
+                  A群</td>
+                <td>
+                  3/15</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=64308&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <form action="candidate_add" method="post" class="candidate-add-form fcfs_candidate_add_form">
+                          <input type="hidden" name="lectureNo" value="64308" />
+                            <input type="image" src="/img/button_mini_add.gif" alt="追加"  id="id_img_1225_4" />
+                          </form>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=22173', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="even_normal">
+                <td>
+                  HB04002</td>
+                <td>Current Issues in Japan II </td>
+                <td>
+                  迫田　さやか</td>
+                <td>
+                  木3</td>
+                <td>
+                  1共31</td>
+                <td>
+                  後期</td>
+                <td>
+                  人社群</td>
+                <td>
+                  A群</td>
+                <td>
+                  6/25</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=63493&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <form action="candidate_add" method="post" class="candidate-add-form fcfs_candidate_add_form">
+                          <input type="hidden" name="lectureNo" value="63493" />
+                            <input type="image" src="/img/button_mini_add.gif" alt="追加"  id="id_img_1225_4" />
+                          </form>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=22175', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="odd_normal">
+                <td>
+                  N814001</td>
+                <td>Data Analysis Practice II-E2 </td>
+                <td>
+                  PATAKY，Todd</td>
+                <td>
+                  金3</td>
+                <td>
+                  学術情報メディアセンター南館204</td>
+                <td>
+                  後期</td>
+                <td>
+                  自然群</td>
+                <td>
+                  B群</td>
+                <td>
+                  20/20</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=63794&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <img src="/img/button_mini_add_disable.gif" >
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=22275', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="even_normal">
+                <td>
+                  H753001</td>
+                <td>Disaster and Culture II-E2 </td>
+                <td>
+                  LAHOURNAT，Florence</td>
+                <td>
+                  木3</td>
+                <td>
+                  共北3C</td>
+                <td>
+                  後期</td>
+                <td>
+                  人社群</td>
+                <td>
+                  A群</td>
+                <td>
+                  25/25</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=64650&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <img src="/img/button_mini_add_disable.gif" >
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=22666', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="odd_normal">
+                <td>
+                  H937001</td>
+                <td>Economy and Society II-E2 </td>
+                <td>
+                  陶　俊帆</td>
+                <td>
+                  火5</td>
+                <td>
+                  4共14</td>
+                <td>
+                  後期</td>
+                <td>
+                  人社群</td>
+                <td>
+                  A群</td>
+                <td>
+                  58/60</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=63919&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <form action="candidate_add" method="post" class="candidate-add-form fcfs_candidate_add_form">
+                          <input type="hidden" name="lectureNo" value="63919" />
+                            <input type="image" src="/img/button_mini_add.gif" alt="追加"  id="id_img_1225_4" />
+                          </form>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=22359', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr class="even_normal">
+                <td>
+                  H731001</td>
+                <td>Education in Contemporary Japan </td>
+                <td>
+                  河合　淳子</td>
+                <td>
+                  水3</td>
+                <td>
+                  共西23</td>
+                <td>
+                  後期</td>
+                <td>
+                  人社群</td>
+                <td>
+                  A群</td>
+                <td>
+                  25/25</td>
+                <td>
+                  <table style="border-collapse:collapse; border-spacing: 0px;">
+                    <tr>
+                      <td style="padding: 0px; width: 39px;"><a href="candidate_add_detail?dbName=la&lectureNo=63486&amp;condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" id="id_a_1225_0" ><img src="/img/button_mini_detail.gif" alt="詳細"  id="id_img_1225_3" /></a></td>
+                      <td style="padding: 0px;">
+                        <img src="/img/button_mini_add_disable.gif" >
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 0px;" nowrap >
+                          <a href="#" onclick="window.open('../syllabus/course_old_name_view?courseNo=22168', '科目名変更等一覧'); return false;" id="id_a_1076_0" ><img src="/img/button_mini_course_title_change2.gif" alt="科目名変更等一覧"  id="id_img_1076_3" /></a>
+                        </td>
+                      </tr>
+                    </table>
+                </td>
+              </tr>
+
+            <tr><td bgcolor="#9DA0B4" class="th_top_normal" align="center" colspan="10"></td></tr>
+
+          </table>
+          <!--/search result -->
+        </center>
+
+
+        <center>
+  
+              <table border="0" cellspacing="0" cellpadding="3">
+                <tr class="">
+      
+                  <td nowrap>
+                    
+                            前の30件
+                        </td>
+                  <td ><a href="lecture_search?condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=1" class="pager_link" style="color: red" >1</a>&nbsp;</td>
+                  <td ><a href="lecture_search?condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=2" class="pager_link"  >2</a>&nbsp;</td>
+                  <td ><a href="lecture_search?condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=3" class="pager_link"  >3</a>&nbsp;</td>
+                  <td ><a href="lecture_search?condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=4" class="pager_link"  >4</a>&nbsp;</td>
+                  <td ><a href="lecture_search?condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=5" class="pager_link"  >5</a>&nbsp;</td>
+                  <td ><a href="lecture_search?condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=6" class="pager_link"  >6</a>&nbsp;</td>
+                  <td nowrap>
+                    <a href="lecture_search?condition.semester=&condition.courseTitle=&condition.courseTitleEn=&condition.targetStudent=&condition.teacherName=&condition.teacherNameEn=&condition.syutyu=false&condition.hasCapacity=true&condition.numberingKateiNo=&condition.numberingDepartmentNo=&condition.numberingDisciplineNo=&condition.numberingLevelNo=&condition.numberingJugyokeitaiNo=&condition.numberingLanguageNo=&condition.numberingBunkaNo=&page=2" class="pager_link" id="id_a_1261_2" >次の30件</a>
+                        </td>
+      
+                </tr>
+              </table>
+          </center>
+  
+        
+        
+
+
+
+</div>
+    <br />
+  <div class="content">
+    <center>
+      <br>
+      <a href="timeslot_list" id="id_a_1225_2" ><img src="/img/button_back.gif"  id="id_img_1225_5" /></a>
+    </center>
+  </div>
+
+<!-- /contents -->
+      
+      <div class="copyright">
+          <img src="/img/copyright.gif" alt="">
+        </div>
+      </div>
+    
+  </div>
+  <div id="footer" />
+
+</div>
+<div id="jsp_path">student/la/timeslot/lecture_search.jsp</div>
+<script type="text/javascript" src="/js/js.cookie.js"></script>
+<style>
+.loading_modal_background {
+  position: absolute;
+  background-color: #000;
+  opacity: 0.2;
+  display: none;
+  z-index: 99999;
+  top: 0;
+  left: 0;
+}
+
+.loading_modal_body {
+  position: absolute;
+  padding: 2em;
+  background-color: #FFF;
+  border: 1px solid #000;
+  display: none;
+  z-index: 100000;
+}
+
+.loading_modal_body.now-loading {
+  animation: LOADING_MODAL_ANIMATION 5.1s;
+}
+
+.loading_modal_background.now-loading {
+  animation: LOADING_MODAL_BACKGROUND_ANIMATION 5.1s;
+}
+
+@keyframes LOADING_MODAL_ANIMATION {
+  0% {
+    opacity: 0;
+  }
+  99% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes LOADING_MODAL_BACKGROUND_ANIMATION {
+  0% {
+    opacity: 0;
+  }
+  99% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0.2;
+  }
+}
+</style>
+
+<div class="loading_modal_background"></div>
+<div class="loading_modal_body">
+<div class="loading_modal_body_inline" style="display: inline-block"></div>
+<script type="text/javascript">
+  jQuery(function() {
+    var adjustModalPosition = function() {
+      var width = jQuery("body").width();
+      var height = jQuery("body").height();
+      var modal_width = jQuery(".loading_modal_body_inline").width();
+      var modal_height = jQuery(".loading_modal_body_inline").height();
+      var scroll = window.pageYOffset;
+      jQuery(".loading_modal_body").css("top", scroll + window.innerHeight / 2 - modal_height / 2)
+                           .css("left", width / 2 - modal_width / 2);
+    };
+    var openConfirmWindow = function() {
+      var height = document.documentElement.clientHeight < document.body.clientHeight ? document.body.clientHeight : document.documentElement.clientHeight;
+      var width = document.body.offsetWidth;
+      
+        jQuery(".loading_modal_body_inline").html(
+          '<center>' +
+          '  <div style="font-size: 120%; white-space: nowrap">しばらくお待ちください</div>' +
+          '  <br />' +
+          '  <div style="white-space: nowrap">現在アクセスが集中しており、順番に処理をしています。</div>' +
+          '  <div style="color: red">' +
+          '    <div style="text-decoration: underline">' +
+          '      <div style="white-space: nowrap">ブラウザで「戻る」や「更新」のボタンを押したりせず、</div>' +
+          '      <div style="white-space: nowrap">処理が完了するまでこのままお待ちください。</div>' +
+          '    </div>' +
+          '    <div style="white-space: nowrap">（履修登録期間中は処理に10分程度かかることがあります）</div>' +
+          '  </div>' +
+          '</center>'
+        );
+      
+      jQuery(".loading_modal_background").height(height).width(width).addClass("now-loading").show();
+      jQuery(".loading_modal_body").addClass("now-loading").show();
+      adjustModalPosition();
+    };
+
+    var absolutePath = function(path) {
+      var e = document.createElement('span');
+      e.innerHTML = '<a href="' + path + '" />';
+      return e.firstChild.href;
+    }
+
+    var regTimeslotPage = /\/student\/la\/timeslot\//;
+    jQuery("a").bind("click", function(e) {
+      if (!e.customClickTarget) e.customClickTarget = e.currentTarget;
+    });
+
+    jQuery("body").bind("click", function(e) {
+      if (e.customClickTarget && !e.defaultPrevented) {
+        var $a = jQuery(e.customClickTarget);
+        var path = absolutePath($a.attr("href"));
+        if (!$a.attr("target") && path.match(regTimeslotPage) && !$a.is(".no-loading-modal")) {
+          openConfirmWindow();
+        }
+      }
+    });
+    jQuery("body").bind("submit", function(e) {
+      if (!e.defaultPrevented) {
+        var $f = jQuery(e.target);
+        var path = absolutePath($f.attr("action"));
+        if (path.match(regTimeslotPage) && !$f.is(".no-loading-modal")) {
+          openConfirmWindow();
+        }
+      }
+    });
+  });
+</script>
+</body>
+</html>
+
