@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import re
-from urllib.parse import urljoin
+import unicodedata
+import warnings
+from urllib.parse import urlencode, urljoin
 
 import pyotp
 import requests
-from bs4 import BeautifulSoup
-import warnings
-from bs4 import XMLParsedAsHTMLWarning
+from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
 
 # BS4の警告を非表示にする
 warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
@@ -16,6 +16,26 @@ UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like 
 MAX_HOPS = 15
 SAML_FIELDS = {"SAMLResponse", "SAMLRequest", "RelayState"}
 KULASIS_ENCODING = "cp932"  # KULASISは windows-31j(=CP932) 固定。apparent_encodingの誤判定を避ける
+DEFAULT_LECTURE_SEARCH = "https://www.k.kyoto-u.ac.jp/student/la/timeslot/lecture_search"
+
+# 実ページのページ送りリンクと同じ検索条件（hasCapacity=true が「先着順対象科目」トグル）
+SEARCH_PARAMS_BASE = {
+    "condition.semester": "",
+    "condition.courseTitle": "",
+    "condition.courseTitleEn": "",
+    "condition.targetStudent": "",
+    "condition.teacherName": "",
+    "condition.teacherNameEn": "",
+    "condition.syutyu": "false",
+    "condition.hasCapacity": "true",
+    "condition.numberingKateiNo": "",
+    "condition.numberingDepartmentNo": "",
+    "condition.numberingDisciplineNo": "",
+    "condition.numberingLevelNo": "",
+    "condition.numberingJugyokeitaiNo": "",
+    "condition.numberingLanguageNo": "",
+    "condition.numberingBunkaNo": "",
+}
 
 
 class KulasisError(Exception):
@@ -61,6 +81,7 @@ def _form_data(form) -> dict[str, str]:
             seen_submit = True
         data[name] = inp.get("value", "")
     return data
+
 
 class KulasisClient:
 
@@ -189,7 +210,7 @@ class KulasisClient:
             # 4. 認証方式選択画面 (authselect.php) ➔ otplogin.cgi への遷移構築
             if "authselect.php" in curr_url:
                 print(" -> authselect.php を検出")
-                from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
+                from urllib.parse import parse_qs, urlparse, urlunparse
 
                 parsed = urlparse(curr_url)
                 qs = parse_qs(parsed.query)
@@ -264,48 +285,42 @@ class KulasisClient:
 
         raise LoginError(f"リダイレクト/フォーム送信が{MAX_HOPS}回を超えました")
 
-    def fetch_entrylimit_page(self) -> str:
-        """履修(人数)制限ページのHTMLを取得する"""
-        url = self.cfg.get("pages", {}).get(
-            "entrylimit", "https://www.k.kyoto-u.ac.jp/student/la/entrylimit/regist"
-        )
-        r = self._req("GET", url)
-        r.encoding = KULASIS_ENCODING
-        return r.text
+    # ------------------------------------------------------------------
+    # 履修登録ページ: 科目検索（先着順）
+    # ------------------------------------------------------------------
+    def _lecture_search_url(self) -> str:
+        return self.cfg.get("pages", {}).get("lecture_search", DEFAULT_LECTURE_SEARCH)
+
+    def fetch_lecture_search(self, course_title: str, max_pages: int = 3) -> list[str]:
+        """先着順対象科目を科目名で検索し、結果ページのHTMLを返す（1ページ30件、最大max_pagesまで）。
+
+        KULASISはcp932なので、日本語の検索語はcp932でパーセントエンコードして送る。
+        ローマ数字(Ⅱ)はNFKCでアルファベット(II)へ変換（サイトの注意書きに従う）。
+        """
+        base = self._lecture_search_url()
+        title = unicodedata.normalize("NFKC", course_title).strip()
+        pages: list[str] = []
+        for page in range(1, max_pages + 1):
+            params = {**SEARCH_PARAMS_BASE, "condition.courseTitle": title, "page": str(page)}
+            query = urlencode(params, encoding=KULASIS_ENCODING, errors="replace")
+            r = self._req("GET", f"{base}?{query}")
+            r.encoding = KULASIS_ENCODING
+            pages.append(r.text)
+            soup = BeautifulSoup(r.text, "lxml")
+            if soup.find("a", string=re.compile("次の30件")) is None:
+                break
+        return pages
 
     def apply(self, lecture_no: str) -> None:
-        """指定lecture_noの科目に申込む。
+        """指定lectureNoの科目に「追加」(candidate_add)を送信する。
 
-        規約: 申込ボタン(regist_check) → 確認画面(primaryId) → 確定(regist_save)
-              の2段階。成功判定は最終到達URLに regist_complete が含まれるかで行う。
+        【未検証】「追加」後の遷移（確認画面の有無・履修登録の確定か候補追加か）は未確認。
+        現状は POST が HTTP 2xx で返れば送信成功として扱い、最終到達URLをログに出す。
+        遷移が判明したらここに確認画面の処理と成功判定を足すこと。
         """
-        entrylimit_url = self.cfg.get("pages", {}).get(
-            "entrylimit", "https://www.k.kyoto-u.ac.jp/student/la/entrylimit/regist"
-        )
-
-        # 1段階目: 申込 → 確認画面
-        r1 = self._req(
-            "POST",
-            urljoin(entrylimit_url, "regist_check"),
-            data={"entrylimitLectureNo": lecture_no},
-        )
-        r1.encoding = KULASIS_ENCODING
-        soup = BeautifulSoup(r1.text, "lxml")
-
-        primary_id_input = soup.find("input", {"name": "primaryId"})
-        confirm_form = primary_id_input.find_parent("form") if primary_id_input else None
-        if not confirm_form:
-            raise ApplyError(
-                f"確認画面(primaryId)が見つかりません。lecture_no={lecture_no} 到達URL={r1.url}"
-            )
-
-        # 2段階目: 確認 → 確定
-        action = urljoin(r1.url, confirm_form.get("action") or "regist_save")
-        data = _form_data(confirm_form)
-        r2 = self._req("POST", action, data=data)
-        r2.encoding = KULASIS_ENCODING
-
-        if "regist_complete" not in r2.url:
-            raise ApplyError(
-                f"申込完了を確認できませんでした。lecture_no={lecture_no} 最終到達URL={r2.url}"
-            )
+        url = urljoin(self._lecture_search_url(), "candidate_add")
+        r = self._req("POST", url, data={"lectureNo": lecture_no})
+        r.encoding = KULASIS_ENCODING
+        print(f"[apply] candidate_add 送信 lectureNo={lecture_no} -> {r.url}")
+        if _has_password_field(r.text):
+            raise ApplyError(f"セッション切れの可能性: ログイン画面に戻されました lectureNo={lecture_no}")

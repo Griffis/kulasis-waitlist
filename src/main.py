@@ -5,7 +5,6 @@ import argparse
 import os
 import sys
 import time
-from collections import Counter
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -14,55 +13,11 @@ import requests
 from .config import Course, load_config, load_courses, norm
 from .kulasis_client import ApplyError, KulasisClient, KulasisError
 from .notify import send_discord
-from .parser import EntryRow, parse_entrylimit
+from .parser import EntryRow, parse_lecture_search
 from .state import load_state, save_state, transition_kind
 
 # .env ファイルから環境変数を自動読み込み
 load_dotenv()
-
-RETRY_STATUSES = {502, 503, 504}  # Bad Gateway / Service Unavailable / Gateway Timeout
-LOGIN_MAX_ATTEMPTS = 5
-LOGIN_RETRY_WAIT_SEC = 3
-
-
-class LoginRetryExhausted(KulasisError):
-    """502/503/504 で再試行しても回復しなかった。"""
-
-
-def _http_status(e: BaseException) -> int | None:
-    return getattr(getattr(e, "response", None), "status_code", None)
-
-
-def login_with_retry(
-    cfg: dict, user: str, password: str, totp_secret: str | None
-) -> tuple[KulasisClient, int, list[str]]:
-    """502/503/504 のときだけ最大 LOGIN_MAX_ATTEMPTS 回までログインをやり直す。
-
-    戻り値: (ログイン済みclient, 失敗回数, 失敗ラベル一覧)
-    それ以外のエラー(ID/パスワード誤りなど)は再試行せず即座に送出する。
-    """
-    errors: list[str] = []
-    last_exc: Exception | None = None
-    for attempt in range(1, LOGIN_MAX_ATTEMPTS + 1):
-        client = KulasisClient(cfg)  # 毎回新しいセッションで試す
-        try:
-            client.login(user, password, totp_secret=totp_secret)
-            if errors:
-                print(f"ログイン成功({attempt}回目 / 事前のエラー {len(errors)}回: {', '.join(errors)})")
-            return client, len(errors), errors
-        except requests.HTTPError as e:
-            status = _http_status(e)
-            if status not in RETRY_STATUSES:
-                raise
-            errors.append(f"HTTP{status}")
-            last_exc = e
-            print(f"ログイン失敗 HTTP{status} ({attempt}/{LOGIN_MAX_ATTEMPTS}回目)")
-            if attempt < LOGIN_MAX_ATTEMPTS:
-                time.sleep(LOGIN_RETRY_WAIT_SEC)
-    tally = ", ".join(f"{k}×{v}" for k, v in Counter(errors).items())
-    raise LoginRetryExhausted(
-        f"ログインが{LOGIN_MAX_ATTEMPTS}回連続でサーバーエラー(エラー回数: {len(errors)}回 / 内訳: {tally})"
-    ) from last_exc
 
 
 def normalize_text(text: str) -> str:
@@ -106,7 +61,7 @@ def build_message(kind: str, course: Course, row: EntryRow | None, applied: bool
         return msg
     if kind == "closed":
         return f"🔴 満席に戻りました: {label}（{_seats(row)}）"
-    return f"⚠️ 検索結果に見つかりません: {label}（科目名/曜時限の不一致、または対象外の可能性）"
+    return f"⚠️ 検索結果に見つかりません: {label}（科目名/曜時限の不一致、または先着順の対象外の可能性）"
 
 
 def run(args: argparse.Namespace) -> int:
@@ -119,7 +74,7 @@ def run(args: argparse.Namespace) -> int:
             html = raw.decode("utf-8")
         except UnicodeDecodeError:
             html = raw.decode("cp932", errors="replace")
-        rows = parse_entrylimit(html)
+        rows = parse_lecture_search(html)
         print(f"{len(rows)} 行を解析")
         for c in courses:
             row = find_row(c, rows)
@@ -150,12 +105,24 @@ def run(args: argparse.Namespace) -> int:
 
     totp_secret = os.environ.get("TOTP_SECRET")
 
+    rows_by_course: dict[str, list[EntryRow]] = {}
     try:
-        client, _login_errors, _ = login_with_retry(cfg, user, password, totp_secret)
-        html = client.fetch_entrylimit_page()
+        client = KulasisClient(cfg)
+        client.login(user, password, totp_secret=totp_secret)
+
+        debug_pages: list[str] = []
+        for i, c in enumerate(courses):
+            if i:
+                time.sleep(1)  # サーバ負荷・アカウントロック回避のため間隔を空ける
+            pages = client.fetch_lecture_search(c.match or c.name)
+            debug_pages.extend(pages)
+            rows: list[EntryRow] = []
+            for html in pages:
+                rows.extend(parse_lecture_search(html))
+            rows_by_course[c.key] = rows
+
         if args.dry_run:  # デバッグ保存は --dry-run 実行時のみ
-            Path("debug_fetched.html").write_text(html, encoding="utf-8")
-        rows = parse_entrylimit(html)
+            Path("debug_fetched.html").write_text("\n<!-- ==== next page ==== -->\n".join(debug_pages), encoding="utf-8")
     except (KulasisError, requests.RequestException) as e:
         msg = f"{type(e).__name__}: {e}"
         print(msg, file=sys.stderr)
@@ -167,7 +134,7 @@ def run(args: argparse.Namespace) -> int:
         return 0
 
     for c in courses:
-        row = find_row(c, rows)
+        row = find_row(c, rows_by_course.get(c.key, []))
         status = status_of(row)
         entry = state["courses"].get(c.key) or {}
         old_status = entry.get("status")
@@ -202,12 +169,13 @@ def run(args: argparse.Namespace) -> int:
                 fail_errors = []
                 print(f"{c.key}: 自動申込 成功")
             except (KulasisError, requests.RequestException) as e:
-                status_code = _http_status(e)
+                status_code = getattr(getattr(e, "response", None), "status_code", None)
                 err_label = f"HTTP{status_code}" if status_code else type(e).__name__
                 fail_count += 1
                 fail_errors.append(err_label)
                 print(f"{c.key}: 自動申込 失敗({fail_count}回連続, 今回: {err_label}) {e}")
                 if fail_count % fail_notify_threshold == 0:
+                    from collections import Counter
                     tally = Counter(fail_errors)
                     detail = ", ".join(f"{k}×{v}" for k, v in tally.items())
                     notify(
@@ -236,7 +204,7 @@ def run(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(description="KULASIS 履修(人数)制限 監視・自動申込")
+    p = argparse.ArgumentParser(description="KULASIS 先着順科目 監視・自動申込")
     p.add_argument("--dry-run", action="store_true", help="通知・state保存・自動申込をせず標準出力に出す")
     p.add_argument("--test-discord", action="store_true", help="Discordにテスト通知だけ送る")
     p.add_argument("--offline-html", metavar="FILE", help="保存済みHTMLでパーサだけ確認する")
