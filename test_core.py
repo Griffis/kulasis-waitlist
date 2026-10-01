@@ -120,3 +120,161 @@ def test_is_transient():
     assert _is_transient(requests.HTTPError(response=SimpleNamespace(status_code=502))) is True
     assert _is_transient(requests.HTTPError(response=SimpleNamespace(status_code=401))) is False
     assert _is_transient(ValueError("x")) is False
+
+
+# ---------------------------------------------------------------------------
+# 再試行（第1層: 1リクエストの再送 / 申込の再送 / 第2層: ログインのやり直し）
+# ---------------------------------------------------------------------------
+import pytest
+
+import src.kulasis_client as kc
+import src.main as main_mod
+from src.kulasis_client import ApplyError, KulasisClient, KulasisError
+
+
+class FakeResp:
+    def __init__(self, status=200, text="", url="https://example.test/x"):
+        self.status_code, self.text, self.url = status, text, url
+        self.encoding, self.history, self.headers = "utf-8", [], {}
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise requests.HTTPError(str(self.status_code), response=self)
+
+
+@pytest.fixture(autouse=True)
+def _no_sleep(monkeypatch):
+    monkeypatch.setattr(kc.time, "sleep", lambda s: None)
+    monkeypatch.setattr(main_mod.time, "sleep", lambda s: None)
+    monkeypatch.setattr(kc, "budget_left", lambda: True)
+    monkeypatch.setattr(main_mod, "budget_left", lambda: True)
+
+
+def _client_with(responses):
+    client = KulasisClient({})
+    calls = []
+
+    def fake_request(method, url, **kw):
+        calls.append((method, url))
+        item = responses[min(len(calls) - 1, len(responses) - 1)]
+        if isinstance(item, Exception):
+            raise item
+        return item
+
+    client.session.request = fake_request
+    return client, calls
+
+
+def test_req_resends_after_502_then_succeeds():
+    client, calls = _client_with([FakeResp(502), FakeResp(502), FakeResp(200, "ok")])
+    assert client._req("GET", "https://example.test/x").text == "ok"
+    assert len(calls) == 3
+
+
+def test_req_gives_up_after_5_attempts():
+    client, calls = _client_with([FakeResp(502)])
+    with pytest.raises(requests.HTTPError):
+        client._req("GET", "https://example.test/x")
+    assert len(calls) == 5
+
+
+def test_req_does_not_resend_non_transient_or_retry_false():
+    client, calls = _client_with([FakeResp(401)])
+    with pytest.raises(requests.HTTPError):
+        client._req("GET", "https://example.test/x")
+    assert len(calls) == 1
+    client, calls = _client_with([FakeResp(502)])
+    with pytest.raises(requests.HTTPError):
+        client._req("POST", "https://example.test/x", retry=False)
+    assert len(calls) == 1
+
+
+REGISTERED = '<a href="/student/la/support/top?no=63816&from=x">全共:Biologi..</a>'
+
+
+def _apply_client(posts, timeslots):
+    """posts: candidate_add への応答/例外の列。timeslots: 時間割ページHTMLの列。"""
+    client = KulasisClient({})
+    post_calls, ts_iter = [], iter(timeslots)
+    client._timeslot_html = lambda: next(ts_iter)
+
+    def fake_req(method, url, **kw):
+        post_calls.append(url)
+        item = posts[min(len(post_calls) - 1, len(posts) - 1)]
+        if isinstance(item, Exception):
+            raise item
+        return item
+
+    client._req = fake_req
+    return client, post_calls
+
+
+def _added(text=REGISTERED):
+    return FakeResp(200, text, url="https://example.test/student/la/timeslot/timeslot_list?server=callisto")
+
+
+def test_apply_skips_when_already_in_timetable():
+    client, posts = _apply_client([_added()], [REGISTERED])
+    assert client.apply("63816") is False
+    assert posts == []
+
+
+def test_apply_checks_timetable_before_resending_after_502():
+    err = requests.HTTPError("502", response=FakeResp(502))
+    client, posts = _apply_client([err], ["", REGISTERED])  # 事前確認=未登録 → 502 → 再確認=登録済み
+    assert client.apply("63816") is True
+    assert len(posts) == 1
+
+
+def test_apply_resends_after_502_when_not_registered():
+    err = requests.HTTPError("502", response=FakeResp(502))
+    client, posts = _apply_client([err, _added()], ["", ""])  # 事前=未登録 / 502後の確認=未登録 → 再送で成功
+    assert client.apply("63816") is True
+    assert len(posts) == 2
+
+
+def test_apply_raises_without_resend_when_not_in_timetable_after_success_response():
+    client, posts = _apply_client([_added("")], [""])
+    with pytest.raises(ApplyError):
+        client.apply("63816")
+    assert len(posts) == 1
+
+
+class _FakeLoginClient:
+    plan: list = []
+    made = 0
+    otp_sent = False
+
+    def __init__(self, cfg):
+        type(self).made += 1
+
+    def login(self, user, password, totp_secret=None):
+        item = type(self).plan[type(self).made - 1]
+        if item is not None:
+            raise item
+
+
+def _fake_login(monkeypatch, plan):
+    _FakeLoginClient.plan, _FakeLoginClient.made = plan, 0
+    monkeypatch.setattr(main_mod, "KulasisClient", _FakeLoginClient)
+
+
+def _e(status):
+    return requests.HTTPError(str(status), response=FakeResp(status))
+
+
+def test_login_with_retry_recovers_after_502(monkeypatch):
+    _fake_login(monkeypatch, [_e(502), _e(503), None])
+    _, n_err, errors = main_mod.login_with_retry({}, "u", "p", "s")
+    assert n_err == 2 and errors == ["HTTP502", "HTTP503"]
+
+
+def test_login_with_retry_exhausted_and_non_transient(monkeypatch):
+    _fake_login(monkeypatch, [_e(502)] * 5)
+    with pytest.raises(main_mod.LoginRetryExhausted):
+        main_mod.login_with_retry({}, "u", "p", "s")
+    assert _FakeLoginClient.made == 5
+    _fake_login(monkeypatch, [kc.LoginError("bad password")])
+    with pytest.raises(kc.LoginError):
+        main_mod.login_with_retry({}, "u", "p", "s")
+    assert _FakeLoginClient.made == 1

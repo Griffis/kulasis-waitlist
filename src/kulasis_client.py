@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import time
 import unicodedata
 import warnings
 from urllib.parse import parse_qs, urlencode, urljoin, urlparse, urlunparse
@@ -17,6 +18,15 @@ MAX_HOPS = 15
 SAML_FIELDS = {"SAMLResponse", "SAMLRequest", "RelayState"}
 KULASIS_ENCODING = "cp932"  # KULASISは windows-31j(=CP932) 固定。apparent_encodingの誤判定を避ける
 DEFAULT_LECTURE_SEARCH = "https://www.k.kyoto-u.ac.jp/student/la/timeslot/lecture_search"
+
+# 再試行の設定
+RETRY_STATUSES = {502, 503, 504}   # Bad Gateway / Service Unavailable / Gateway Timeout
+REQ_MAX_ATTEMPTS = 5               # 1リクエストを最大何回送るか（ブラウザの再読み込み相当）
+REQ_RETRY_WAITS = (2, 3, 5, 8)     # 失敗n回目のあとに待つ秒数
+APPLY_MAX_ATTEMPTS = 5             # 自動申込(candidate_add)を最大何回送るか
+APPLY_RETRY_WAITS = (2, 3, 5, 8)
+RETRY_BUDGET_SEC = 240             # プロセス開始からこの秒数を超えたら、以後は再試行しない
+_T0 = time.monotonic()
 
 # 実ページのページ送りリンクと同じ検索条件（hasCapacity=true が「先着順対象科目」トグル）
 SEARCH_PARAMS_BASE = {
@@ -36,6 +46,28 @@ SEARCH_PARAMS_BASE = {
     "condition.numberingLanguageNo": "",
     "condition.numberingBunkaNo": "",
 }
+
+
+def budget_left() -> bool:
+    """再試行に使える時間(プロセス開始から RETRY_BUDGET_SEC 秒)が残っているか。"""
+    return time.monotonic() - _T0 < RETRY_BUDGET_SEC
+
+
+def is_transient(e: BaseException) -> bool:
+    """一時的な障害(502/503/504・接続エラー・タイムアウト)か。True なら再送の価値がある。
+
+    ID/パスワードやワンタイムパスワードの拒否(LoginError)などは False。
+    """
+    if isinstance(e, (requests.ConnectionError, requests.Timeout)):
+        return True
+    if isinstance(e, requests.HTTPError):
+        return getattr(e.response, "status_code", None) in RETRY_STATUSES
+    return False
+
+
+def _err_label(e: BaseException) -> str:
+    status = getattr(getattr(e, "response", None), "status_code", None)
+    return f"HTTP{status}" if status else type(e).__name__
 
 
 def _log(tag: str, msg: str) -> None:
@@ -107,15 +139,30 @@ class KulasisClient:
         self.timeout = timeout
         self.session = requests.Session()
         self._warmed = False
+        self.otp_sent = False  # ワンタイムパスワードを送信済みか（再ログイン時の待ち時間の判断に使う）
         # Accept-Language ヘッダーを追加して日本語UIを固定取得する
         self.session.headers.update({
             "User-Agent": UA,
             "Accept-Language": "ja,ja-JP;q=0.9,en;q=0.8",
         })
 
-    def _req(self, method: str, url: str, **kw) -> requests.Response:
-        r = self.session.request(method, url, timeout=self.timeout, **kw)
-        r.raise_for_status()
+    def _req(self, method: str, url: str, *, retry: bool = True, **kw) -> requests.Response:
+        """HTTPリクエストを送る。一時的な障害(502等)では同じリクエストを再送する(ブラウザの再読み込み相当)。
+
+        retry=False は再送すると二重処理になるリクエスト用（ワンタイムパスワード送信、candidate_add）。
+        """
+        attempts = REQ_MAX_ATTEMPTS if retry else 1
+        for attempt in range(1, attempts + 1):
+            try:
+                r = self.session.request(method, url, timeout=self.timeout, **kw)
+                r.raise_for_status()
+                break
+            except requests.RequestException as e:
+                if attempt >= attempts or not is_transient(e) or not budget_left():
+                    raise
+                wait = REQ_RETRY_WAITS[min(attempt - 1, len(REQ_RETRY_WAITS) - 1)]
+                _log("再送", f"{method} {urlparse(url).path}: {_err_label(e)}。{wait}秒待って再送（失敗{attempt}/{attempts}回目）")
+                time.sleep(wait)
         if not r.encoding or r.encoding.lower() == "iso-8859-1":
             r.encoding = r.apparent_encoding
         return r
@@ -140,7 +187,7 @@ class KulasisClient:
                         saml_form = form
                         break
                 if not saml_form:
-                    _log("ログイン", "✅ 完了: KULASISのページに戻り、パスワード入力欄が無いことを確認しました")
+                    _log("ログイン", "✅ 完了: KULASISのページに戻り、パスワード入力欄が無いことを確認")
                     return
 
             # Meta Refresh（自動転送）の検出
@@ -150,7 +197,7 @@ class KulasisClient:
                 match = re.search(r"url=['\"]?(?P<url>[^'\"]+)['\"]?", content, re.I)
                 if match:
                     redirect_url = urljoin(r.url, match.group("url"))
-                    _log("ログイン", f"ページの自動転送(Meta Refresh)に従って移動します: {urlparse(redirect_url).path}")
+                    _log("ログイン", f"自動転送(Meta Refresh)に従って移動: {urlparse(redirect_url).path}")
                     r = self._req("GET", redirect_url)
                     continue
 
@@ -162,7 +209,7 @@ class KulasisClient:
                     saml_form = form
                     break
             if saml_form:
-                _log("ログイン", "SAML中継フォームを自動送信します（KULASISと京大の統合認証の間で、認証結果を受け渡し中）")
+                _log("ログイン", "SAML中継フォームを自動送信（KULASISと統合認証の間で認証結果を受け渡し）")
                 action = urljoin(r.url, saml_form.get("action") or r.url)
                 data = _form_data(saml_form)
                 r = self._req("POST", action, data=data)
@@ -172,7 +219,7 @@ class KulasisClient:
             pw_input = soup.find("input", {"type": "password"})
             if pw_input is not None:
                 if submitted_credentials:
-                    raise LoginError("ID/パスワードが受け付けられませんでした(認証画面に戻されました)")
+                    raise LoginError("ID/パスワードが受理されなかった(認証画面に戻された)")
                 form = pw_input.find_parent("form")
                 data = _form_data(form)
                 if data.get("sessid"):
@@ -189,13 +236,13 @@ class KulasisClient:
                     None,
                 )
                 if not user_field or not pw_input.get("name"):
-                    raise LoginError("ログインフォームの入力欄名を特定できませんでした")
+                    raise LoginError("ログインフォームの入力欄名を特定できなかった")
                 data[user_field] = user
                 data[pw_input["name"]] = password
                 submitted_credentials = True
 
                 # ID・パスワード・sessid は Actions のログに残さない（入力欄の名前だけ出す）
-                _log("ログイン", f"ID/パスワードを送信します（入力欄: {user_field} / {pw_input['name']}）")
+                _log("ログイン", f"ID/パスワードを送信（入力欄: {user_field} / {pw_input['name']}）")
 
                 action = urljoin(r.url, form.get("action") or r.url)
                 method = (form.get("method") or "post").upper()
@@ -209,7 +256,7 @@ class KulasisClient:
             auth_form = soup.find("form", action=re.compile(r"authselect\.php", re.I))
 
             if ("u2flogin" in curr_url or u2f_form or auth_link or auth_form) and "authselect.php" not in curr_url:
-                _log("ログイン", "セキュリティキー(FIDO/U2F)の認証画面を検出 → 使えないので認証方式の選択画面へ切り替えます")
+                _log("ログイン", "セキュリティキー(FIDO/U2F)の認証画面を検出。認証方式の選択画面へ切替")
                 if auth_link and auth_link.get("href"):
                     target_url = urljoin(r.url, auth_link["href"])
                     r = self._req("GET", target_url)
@@ -226,7 +273,7 @@ class KulasisClient:
 
             # 4. 認証方式選択画面 (authselect.php) ➔ otplogin.cgi への遷移構築
             if "authselect.php" in curr_url:
-                _log("ログイン", "認証方式の選択画面を検出 → ワンタイムパスワード(TOTP)方式のページへ移動します")
+                _log("ログイン", "認証方式の選択画面を検出。ワンタイムパスワード(TOTP)のページへ移動")
 
                 parsed = urlparse(curr_url)
                 qs = parse_qs(parsed.query)
@@ -259,9 +306,9 @@ class KulasisClient:
                 )
                 if otp_input is not None:
                     if not totp_secret:
-                        raise MfaRequired("TOTP_SECRETが設定されていないため、2段階認証を突破できません")
+                        raise MfaRequired("TOTP_SECRETが未設定のため、2段階認証を通過できない")
                     if submitted_otp:
-                        raise LoginError("ワンタイムパスワードが拒否されました")
+                        raise LoginError("ワンタイムパスワードが拒否された")
 
                     form = otp_input.find_parent("form")
                     data = _form_data(form)
@@ -271,16 +318,18 @@ class KulasisClient:
                     otp_code = pyotp.TOTP(clean_secret).now()
                     data[otp_input["name"]] = otp_code
                     submitted_otp = True
+                    self.otp_sent = True
 
                     if current_sessid and not data.get("sessid"):
                         data["sessid"] = current_sessid
 
-                    _log("ログイン", f"ワンタイムパスワード(TOTP)を送信します（入力欄: {otp_input.get('name')}）")
+                    _log("ログイン", f"ワンタイムパスワード(TOTP)を送信（入力欄: {otp_input.get('name')}）")
 
                     action = urljoin(r.url, form.get("action") or r.url)
                     method = (form.get("method") or "post").upper()
                     kw = {"params": data} if method == "GET" else {"data": data}
-                    r = self._req("POST" if method == "POST" else "GET", action, **kw)
+                    # 同じコードの再送はサーバー側で拒否され得るため、このリクエストだけは再送しない
+                    r = self._req("POST" if method == "POST" else "GET", action, retry=False, **kw)
                     continue
 
             # 単一フォームの自動送信フォールバック
@@ -301,9 +350,9 @@ class KulasisClient:
 
             form_actions = [f.get("action") for f in forms]
             links = [a.get("href") for a in soup.find_all("a")]
-            raise LoginError(f"未対応の認証ステップに到達しました (URL: {curr_url}, フォーム動作先: {form_actions}, リンク先: {links[:3]})")
+            raise LoginError(f"未対応の認証ステップに到達した (URL: {curr_url}, フォーム動作先: {form_actions}, リンク先: {links[:3]})")
 
-        raise LoginError(f"リダイレクト/フォーム送信が{MAX_HOPS}回を超えました")
+        raise LoginError(f"リダイレクト/フォーム送信が{MAX_HOPS}回を超えた")
 
     # ------------------------------------------------------------------
     # 履修登録ページ: 科目検索（先着順）と追加
@@ -324,7 +373,7 @@ class KulasisClient:
             try:
                 self._req("GET", self._sibling(page))
             except requests.RequestException as e:
-                _log("準備", f"{page} ページの取得に失敗しましたが、続行します: {e}")
+                _log("準備", f"{page} ページの取得に失敗。続行する: {e}")
 
     def fetch_lecture_search(self, course_title: str, max_pages: int = 3) -> list[str]:
         """先着順対象科目を科目名で検索し、結果ページのHTMLを返す（1ページ30件、最大max_pagesまで）。
@@ -337,7 +386,7 @@ class KulasisClient:
         title = unicodedata.normalize("NFKC", course_title).strip()
         pages: list[str] = []
         for page in range(1, max_pages + 1):
-            _log("検索", f"科目名「{title}」を先着順対象科目から検索中（{page}ページ目）")
+            _log("検索", f"科目名「{title}」を先着順対象科目から検索（{page}ページ目）")
             params = {**SEARCH_PARAMS_BASE, "condition.courseTitle": title, "page": str(page)}
             query = urlencode(params, encoding=KULASIS_ENCODING, errors="replace")
             r = self._req("GET", f"{base}?{query}")
@@ -367,29 +416,49 @@ class KulasisClient:
 
         戻り値: True = 追加を送信して時間割への反映を確認した / False = 既に時間割にあり送信しなかった
         実測: POST candidate_add → 302 → timeslot_list（確認ページなし）。
+        一時的な障害(502等)では最大 APPLY_MAX_ATTEMPTS 回まで送り直す。
+        ただし502でもサーバー側で処理済みの場合があるため、再送の前に時間割で反映を確認する。
         ※履修登録の確定は登録期間(Step2)の「登録科目の決定へ」で別途行う必要がある。
         """
         # 二重追加時の挙動が未確認なので、既に時間割に入っていれば送信しない
         if lecture_no in self._registered_nos(self._timeslot_html()):
-            _log("申込", f"lectureNo={lecture_no} は既に時間割(候補)に入っているため、追加は送信しません")
+            _log("申込", f"lectureNo={lecture_no} は既に時間割(候補)にあるため、追加は送信しない")
             return False
 
-        r = self._req("POST", self._sibling("candidate_add"), data={"lectureNo": lecture_no})
+        for attempt in range(1, APPLY_MAX_ATTEMPTS + 1):
+            try:
+                return self._apply_once(lecture_no)
+            except requests.RequestException as e:
+                if not is_transient(e) or attempt >= APPLY_MAX_ATTEMPTS or not budget_left():
+                    raise
+                wait = APPLY_RETRY_WAITS[min(attempt - 1, len(APPLY_RETRY_WAITS) - 1)]
+                _log("申込", f"送信失敗 {_err_label(e)}。{wait}秒待って再送（失敗{attempt}/{APPLY_MAX_ATTEMPTS}回目）")
+                time.sleep(wait)
+                try:
+                    if lecture_no in self._registered_nos(self._timeslot_html()):
+                        _log("申込", "時間割への反映を確認。再送は不要")
+                        return True
+                except requests.RequestException as e2:
+                    _log("申込", f"時間割の確認に失敗: {_err_label(e2)}。そのまま再送する")
+        raise AssertionError("unreachable")
+
+    def _apply_once(self, lecture_no: str) -> bool:
+        r = self._req("POST", self._sibling("candidate_add"), retry=False, data={"lectureNo": lecture_no})
         r.encoding = KULASIS_ENCODING
 
         chain = " -> ".join(f"{h.status_code} {h.headers.get('Location', '')}" for h in r.history)
-        _log("申込", f"「追加」を送信しました lectureNo={lecture_no}（応答の経路: {chain or 'リダイレクトなし'} / 最終ページ: {r.url}）")
+        _log("申込", f"「追加」を送信 lectureNo={lecture_no}（応答経路: {chain or 'リダイレクトなし'} / 最終ページ: {r.url}）")
 
         if _has_password_field(r.text):
-            raise ApplyError(f"セッション切れの可能性: ログイン画面に戻されました lectureNo={lecture_no}")
+            raise ApplyError(f"セッション切れの可能性: ログイン画面に戻された lectureNo={lecture_no}")
 
         # リダイレクト先が timeslot_list ならその応答で確認、違えば取り直す
         after = r.text if "timeslot_list" in r.url else self._timeslot_html()
         ok = lecture_no in self._registered_nos(after)
-        _log("申込", f"時間割ページで科目を確認: {'✅ 載っています（追加成功）' if ok else '❌ 見当たりません（追加失敗の可能性）'}")
+        _log("申込", f"時間割ページで科目を確認: {'✅ 載っている（追加成功）' if ok else '❌ 見当たらない（追加失敗の可能性）'}")
         if not ok:
             area = BeautifulSoup(after, "lxml").find("div", class_="contents")
             snippet = " ".join((area or BeautifulSoup(after, "lxml")).get_text(" ", strip=True).split())[:400]
             _log("申込", f"応答本文(先頭400字): {snippet}")
-            raise ApplyError(f"追加後の時間割に科目が見当たりません(追加失敗の可能性) lectureNo={lecture_no}")
+            raise ApplyError(f"追加後の時間割に科目が見当たらない(追加失敗の可能性) lectureNo={lecture_no}")
         return True
