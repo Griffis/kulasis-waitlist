@@ -24,6 +24,6 @@ courses:
     # day: 火
     # period: 5
 
-  # - name: Programming Practice (Python) -E2
-    # day: 水
-    # period: 5
+  - name: Programming Practice (Python) -E2
+    day: 水
+    period: 5
