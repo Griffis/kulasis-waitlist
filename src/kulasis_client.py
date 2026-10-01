@@ -20,8 +20,8 @@ KULASIS_ENCODING = "cp932"  # KULASISは windows-31j(=CP932) 固定。apparent_e
 DEFAULT_LECTURE_SEARCH = "https://www.k.kyoto-u.ac.jp/student/la/timeslot/lecture_search"
 
 # 再試行の設定
-RETRY_STATUSES = {502, 503, 504}   # Bad Gateway / Service Unavailable / Gateway Timeout
-REQ_MAX_ATTEMPTS = 5               # 1リクエストを最大何回送るか（ブラウザの再読み込み相当）
+RETRY_STATUSES = {500, 502, 503, 504}   # Server Error / Bad Gateway / Service Unavailable / Gateway Timeout
+REQ_MAX_ATTEMPTS = 5               # GETを最大何回送るか（ブラウザの再読み込み相当）。POSTは再送しない
 REQ_RETRY_WAITS = (2, 3, 5, 8)     # 失敗n回目のあとに待つ秒数
 APPLY_MAX_ATTEMPTS = 5             # 自動申込(candidate_add)を最大何回送るか
 APPLY_RETRY_WAITS = (2, 3, 5, 8)
@@ -54,7 +54,7 @@ def budget_left() -> bool:
 
 
 def is_transient(e: BaseException) -> bool:
-    """一時的な障害(502/503/504・接続エラー・タイムアウト)か。True なら再送の価値がある。
+    """一時的な障害(500/502/503/504・接続エラー・タイムアウト)か。True なら再試行の価値がある。
 
     ID/パスワードやワンタイムパスワードの拒否(LoginError)などは False。
     """
@@ -147,18 +147,26 @@ class KulasisClient:
         })
 
     def _req(self, method: str, url: str, *, retry: bool = True, **kw) -> requests.Response:
-        """HTTPリクエストを送る。一時的な障害(502等)では同じリクエストを再送する(ブラウザの再読み込み相当)。
+        """HTTPリクエストを送る。GETは一時的な障害(500/502/503/504等)のとき同じリクエストを再送する(再読み込み相当)。
 
-        retry=False は再送すると二重処理になるリクエスト用（ワンタイムパスワード送信、candidate_add）。
+        POSTは再送しない。サーバー側で処理済みの可能性があり、再送すると状態が壊れ得るため。
+        実測: 認証画面(execution=e1s1)のPOSTが502 → 再送で500になった。
+        POSTの失敗は、呼び出し側(login_with_retry / apply)が「最初からやり直す」か「反映を確認してから再送」で扱う。
         """
-        attempts = REQ_MAX_ATTEMPTS if retry else 1
+        attempts = REQ_MAX_ATTEMPTS if (retry and method.upper() == "GET") else 1
         for attempt in range(1, attempts + 1):
             try:
                 r = self.session.request(method, url, timeout=self.timeout, **kw)
                 r.raise_for_status()
                 break
             except requests.RequestException as e:
-                if attempt >= attempts or not is_transient(e) or not budget_left():
+                if not is_transient(e):
+                    raise
+                if attempts == 1:
+                    if method.upper() != "GET":
+                        _log("再送", f"{method} {urlparse(url).path}: {_err_label(e)}。POSTは二重処理の恐れがあるため再送しない")
+                    raise
+                if attempt >= attempts or not budget_left():
                     raise
                 wait = REQ_RETRY_WAITS[min(attempt - 1, len(REQ_RETRY_WAITS) - 1)]
                 _log("再送", f"{method} {urlparse(url).path}: {_err_label(e)}。{wait}秒待って再送（失敗{attempt}/{attempts}回目）")
@@ -328,7 +336,6 @@ class KulasisClient:
                     action = urljoin(r.url, form.get("action") or r.url)
                     method = (form.get("method") or "post").upper()
                     kw = {"params": data} if method == "GET" else {"data": data}
-                    # 同じコードの再送はサーバー側で拒否され得るため、このリクエストだけは再送しない
                     r = self._req("POST" if method == "POST" else "GET", action, retry=False, **kw)
                     continue
 

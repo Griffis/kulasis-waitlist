@@ -185,8 +185,22 @@ def test_req_does_not_resend_non_transient_or_retry_false():
     assert len(calls) == 1
     client, calls = _client_with([FakeResp(502)])
     with pytest.raises(requests.HTTPError):
-        client._req("POST", "https://example.test/x", retry=False)
+        client._req("GET", "https://example.test/x", retry=False)
     assert len(calls) == 1
+
+
+def test_req_never_resends_post():
+    # 実測: 認証画面のPOSTが502 → 再送すると500。POSTは再送せず、ログインのやり直しに任せる。
+    client, calls = _client_with([FakeResp(502), FakeResp(500)])
+    with pytest.raises(requests.HTTPError):
+        client._req("POST", "https://example.test/idp/profile/SAML2/Redirect/SSO")
+    assert len(calls) == 1
+
+
+def test_req_resends_get_on_500():
+    client, calls = _client_with([FakeResp(500), FakeResp(200, "ok")])
+    assert client._req("GET", "https://example.test/x").text == "ok"
+    assert len(calls) == 2
 
 
 REGISTERED = '<a href="/student/la/support/top?no=63816&from=x">全共:Biologi..</a>'
@@ -264,9 +278,9 @@ def _e(status):
 
 
 def test_login_with_retry_recovers_after_502(monkeypatch):
-    _fake_login(monkeypatch, [_e(502), _e(503), None])
+    _fake_login(monkeypatch, [_e(502), _e(500), None])
     _, n_err, errors = main_mod.login_with_retry({}, "u", "p", "s")
-    assert n_err == 2 and errors == ["HTTP502", "HTTP503"]
+    assert n_err == 2 and errors == ["HTTP502", "HTTP500"]
 
 
 def test_login_with_retry_exhausted_and_non_transient(monkeypatch):

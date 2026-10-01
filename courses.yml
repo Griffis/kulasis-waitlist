@@ -12,7 +12,7 @@ courses:
     period: 1
     match: 宗教学各論II
 
-  - name: 言語学II
+  - name: 言学II
     day: 木
     period: 3
 
@@ -24,6 +24,6 @@ courses:
     # day: 火
     # period: 5
 
-  - name: Programming Practice (Python) -E2
-    day: 水
-    period: 5
+  # - name: Programming Practice (Python) -E2
+    # day: 水
+    # period: 5

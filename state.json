@@ -1,20 +1,26 @@
 {
   "courses": {
-    "木3:言語学II": {
+    "木3:言学II": {
       "apply_fail_count": 0,
       "apply_fail_errors": [],
-      "status": "not_found"
+      "status": "full"
+    },
+    "水5:Programming Practice (Python) -E2": {
+      "applied": true,
+      "apply_fail_count": 0,
+      "apply_fail_errors": [],
+      "status": "available"
     },
     "火1:宗教学各論II（死生学）": {
       "apply_fail_count": 0,
       "apply_fail_errors": [],
-      "status": "not_found"
+      "status": "full"
     },
     "金4:社会学II": {
       "apply_fail_count": 0,
       "apply_fail_errors": [],
-      "status": "not_found"
+      "status": "full"
     }
   },
-  "last_error": "HTTPError: 502 Server Error: Proxy Error for url: https://authidp1.iimc.kyoto-u.ac.jp/idp/profile/SAML2/Redirect/SSO?execution=e1s1"
+  "last_error": null
 }
