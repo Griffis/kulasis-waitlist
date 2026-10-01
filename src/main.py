@@ -52,6 +52,50 @@ def _seats(row: EntryRow | None) -> str:
     return f"{row.applicants}/{row.capacity}"
 
 
+STATUS_TEXT = {
+    "available": "空きあり",
+    "full": "満席",
+    "not_found": "見つからず",
+}
+
+
+def _status_heading(status: str) -> str:
+    return {
+        "available": "🟢 空きあり（申込可能）",
+        "full": "❌ 満席（席が埋まっています）",
+        "not_found": "⚠️ 見つからない（検索結果または先着順対象外）",
+    }[status]
+
+
+def _previous_status(status: str | None) -> str:
+    return STATUS_TEXT.get(status or "", "初回")
+
+
+def format_course_status(
+    course: Course,
+    row: EntryRow | None,
+    old_status: str | None,
+    status: str,
+    *,
+    auto_apply: bool,
+    kulasis_applied: bool,
+    recorded_applied: bool,
+    fail_count: int,
+) -> str:
+    """監視結果を常に4行で表示する。"""
+    seats = "定員情報なし" if row is None or row.capacity is None else (
+        f"{row.applicants}/{row.capacity}人（残り{row.capacity - row.applicants}席）"
+    )
+    return "\n".join((
+        f"{_status_heading(status)}  {course.day_period} {course.name}",
+        f"     席数: {seats}",
+        f"     前回→今回: {_previous_status(old_status)} → {STATUS_TEXT[status]}",
+        "     自動申込: "
+        f"{'ON' if auto_apply else 'OFF'} / KULASIS上の申込: {'あり' if kulasis_applied else 'なし'} "
+        f"/ 申込済みの記録: {'あり' if recorded_applied else 'なし'} / 申込失敗の連続: {fail_count}回",
+    ))
+
+
 def build_message(kind: str, course: Course, row: EntryRow | None, applied: bool) -> str:
     label = f"{course.day_period} {course.name}"
     if kind == "available":
@@ -147,12 +191,6 @@ def run(args: argparse.Namespace) -> int:
         kind = transition_kind(old_status, status)
 
         kulasis_applied = row.already_applied if row is not None else False
-        print(
-            f"{c.key}: {old_status} -> {status} {_seats(row)} "
-            f"[申込済み: KULASIS側={kulasis_applied} / state記録={already_applied}, "
-            f"auto_apply設定={auto_apply}, 連続失敗={fail_count}]"
-        )
-
         applied_now = False
         should_try_apply = (
             auto_apply
@@ -185,6 +223,17 @@ def run(args: argparse.Namespace) -> int:
                         f"⚠️ {c.day_period} {c.name}: 空きがあるのに申込に"
                         f"{fail_count}回連続で失敗しています（内訳: {detail} / 直近: {err_label}: {e}）"
                     )
+
+        print(format_course_status(
+            c,
+            row,
+            old_status,
+            status,
+            auto_apply=auto_apply,
+            kulasis_applied=kulasis_applied,
+            recorded_applied=already_applied,
+            fail_count=fail_count,
+        ))
 
         if kind:
             notify(build_message(kind, c, row, applied_now))

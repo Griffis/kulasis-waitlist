@@ -20,9 +20,9 @@ courses:
     day: 金
     period: 4
 
-  - name: Biological Sciences through Scientific Articles II-E2
-    day: 火
-    period: 5
+  # - name: Biological Sciences through Scientific Articles II-E2
+    # day: 火
+    # period: 5
 
   - name: Programming Practice (Python) -E2
     day: 水

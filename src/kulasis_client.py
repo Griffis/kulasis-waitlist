@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 import unicodedata
 import warnings
-from urllib.parse import urlencode, urljoin
+from urllib.parse import parse_qs, urlencode, urljoin, urlparse, urlunparse
 
 import pyotp
 import requests
@@ -38,6 +38,11 @@ SEARCH_PARAMS_BASE = {
 }
 
 
+def _log(tag: str, msg: str) -> None:
+    """[見出し] 説明 の形式でログを出す。ID・sessid・パスワード等は出さないこと。"""
+    print(f"[{tag}] {msg}")
+
+
 class KulasisError(Exception):
     pass
 
@@ -62,11 +67,6 @@ def _has_password_field(html: str) -> bool:
     return BeautifulSoup(html, "lxml").find("input", {"type": "password"}) is not None
 
 
-def _squash(s: str) -> str:
-    """NFKC正規化 + 空白除去 + 小文字化（表記ゆれ吸収用）。"""
-    return "".join(unicodedata.normalize("NFKC", s).split()).lower()
-
-
 def _form_data(form) -> dict[str, str]:
     data: dict[str, str] = {}
     seen_submit = False
@@ -88,6 +88,18 @@ def _form_data(form) -> dict[str, str]:
     return data
 
 
+def _form_summary(form) -> str:
+    """認証情報の値を出さずに、画面識別に必要なフォーム構造だけを要約する。"""
+    action = urlparse(form.get("action") or "").path or "(現在のURL)"
+    method = (form.get("method") or "post").upper()
+    fields = []
+    for inp in form.find_all(["input", "button"]):
+        name = inp.get("name")
+        if name:
+            fields.append(f"{inp.get('type') or 'text'}:{name}")
+    return f"method={method}, action={action}, fields={fields}"
+
+
 class KulasisClient:
 
     def __init__(self, cfg: dict, timeout: int = 20):
@@ -95,7 +107,6 @@ class KulasisClient:
         self.timeout = timeout
         self.session = requests.Session()
         self._warmed = False
-        self._names: dict[str, str] = {}  # lectureNo -> 科目名（追加後の確認に使う）
         # Accept-Language ヘッダーを追加して日本語UIを固定取得する
         self.session.headers.update({
             "User-Agent": UA,
@@ -118,7 +129,6 @@ class KulasisClient:
         for hop in range(MAX_HOPS):
             soup = BeautifulSoup(r.text, "lxml")
             curr_url = r.url
-            title = soup.title.string.strip() if soup.title and soup.title.string else "No Title"
             forms = soup.find_all("form")
 
             # KULASIS側に復帰し、パスワード欄が無ければログイン完了
@@ -130,7 +140,7 @@ class KulasisClient:
                         saml_form = form
                         break
                 if not saml_form:
-                    print("[DEBUG] ログイン完了を検出しました")
+                    _log("ログイン", "✅ 完了: KULASISのページに戻り、パスワード入力欄が無いことを確認しました")
                     return
 
             # Meta Refresh（自動転送）の検出
@@ -140,7 +150,7 @@ class KulasisClient:
                 match = re.search(r"url=['\"]?(?P<url>[^'\"]+)['\"]?", content, re.I)
                 if match:
                     redirect_url = urljoin(r.url, match.group("url"))
-                    print(f" -> Meta Refresh転送: {redirect_url}")
+                    _log("ログイン", f"ページの自動転送(Meta Refresh)に従って移動します: {urlparse(redirect_url).path}")
                     r = self._req("GET", redirect_url)
                     continue
 
@@ -152,7 +162,7 @@ class KulasisClient:
                     saml_form = form
                     break
             if saml_form:
-                print(" -> SAMLフォーム自動送信")
+                _log("ログイン", "SAML中継フォームを自動送信します（KULASISと京大の統合認証の間で、認証結果を受け渡し中）")
                 action = urljoin(r.url, saml_form.get("action") or r.url)
                 data = _form_data(saml_form)
                 r = self._req("POST", action, data=data)
@@ -184,8 +194,8 @@ class KulasisClient:
                 data[pw_input["name"]] = password
                 submitted_credentials = True
 
-                masked_data = {k: ("***" if "pass" in k.lower() else v) for k, v in data.items()}
-                print(f" -> ID/パスワード送信 [ユーザー欄: {user_field}='{user}', 送信データ: {masked_data}]")
+                # ID・パスワード・sessid は Actions のログに残さない（入力欄の名前だけ出す）
+                _log("ログイン", f"ID/パスワードを送信します（入力欄: {user_field} / {pw_input['name']}）")
 
                 action = urljoin(r.url, form.get("action") or r.url)
                 method = (form.get("method") or "post").upper()
@@ -199,7 +209,7 @@ class KulasisClient:
             auth_form = soup.find("form", action=re.compile(r"authselect\.php", re.I))
 
             if ("u2flogin" in curr_url or u2f_form or auth_link or auth_form) and "authselect.php" not in curr_url:
-                print(" -> FIDO画面回避 (authselectへ遷移)")
+                _log("ログイン", "セキュリティキー(FIDO/U2F)の認証画面を検出 → 使えないので認証方式の選択画面へ切り替えます")
                 if auth_link and auth_link.get("href"):
                     target_url = urljoin(r.url, auth_link["href"])
                     r = self._req("GET", target_url)
@@ -216,8 +226,7 @@ class KulasisClient:
 
             # 4. 認証方式選択画面 (authselect.php) ➔ otplogin.cgi への遷移構築
             if "authselect.php" in curr_url:
-                print(" -> authselect.php を検出")
-                from urllib.parse import parse_qs, urlparse, urlunparse
+                _log("ログイン", "認証方式の選択画面を検出 → ワンタイムパスワード(TOTP)方式のページへ移動します")
 
                 parsed = urlparse(curr_url)
                 qs = parse_qs(parsed.query)
@@ -232,7 +241,6 @@ class KulasisClient:
                 new_query = urlencode(flat_qs)
                 otplogin_url = urlunparse((parsed.scheme, parsed.netloc, "/pub/otplogin.cgi", parsed.params, new_query, parsed.fragment))
 
-                print(f" -> otplogin.cgi へ遷移補完: {otplogin_url}")
                 r = self._req("GET", otplogin_url)
                 continue
 
@@ -267,7 +275,7 @@ class KulasisClient:
                     if current_sessid and not data.get("sessid"):
                         data["sessid"] = current_sessid
 
-                    print(f" -> OTPコード送信 [入力欄: {otp_input.get('name')}]")
+                    _log("ログイン", f"ワンタイムパスワード(TOTP)を送信します（入力欄: {otp_input.get('name')}）")
 
                     action = urljoin(r.url, form.get("action") or r.url)
                     method = (form.get("method") or "post").upper()
@@ -277,8 +285,13 @@ class KulasisClient:
 
             # 単一フォームの自動送信フォールバック
             if len(forms) == 1:
-                print(" -> 単一フォーム自動送信")
                 form = forms[0]
+                title = soup.title.get_text(" ", strip=True) if soup.title else "(なし)"
+                _log(
+                    "認証診断",
+                    "未分類の単一フォームを自動送信: "
+                    f"URL={urlparse(curr_url).path}, title={title!r}, {_form_summary(form)}",
+                )
                 action = urljoin(r.url, form.get("action") or r.url)
                 method = (form.get("method") or "post").upper()
                 data = _form_data(form)
@@ -311,19 +324,7 @@ class KulasisClient:
             try:
                 self._req("GET", self._sibling(page))
             except requests.RequestException as e:
-                print(f"[warmup] {page} の取得に失敗(続行します): {e}")
-
-    def _remember_names(self, soup: BeautifulSoup) -> None:
-        """検索結果から lectureNo -> 科目名 を記録する（追加後の確認用）。"""
-        for inp in soup.find_all("input", {"name": "lectureNo"}):
-            no = inp.get("value")
-            if not no:
-                continue
-            for tr in inp.find_parents("tr"):
-                tds = tr.find_all("td", recursive=False)
-                if len(tds) >= 10:
-                    self._names[no] = " ".join(tds[1].get_text(" ", strip=True).split())
-                    break
+                _log("準備", f"{page} ページの取得に失敗しましたが、続行します: {e}")
 
     def fetch_lecture_search(self, course_title: str, max_pages: int = 3) -> list[str]:
         """先着順対象科目を科目名で検索し、結果ページのHTMLを返す（1ページ30件、最大max_pagesまで）。
@@ -336,13 +337,13 @@ class KulasisClient:
         title = unicodedata.normalize("NFKC", course_title).strip()
         pages: list[str] = []
         for page in range(1, max_pages + 1):
+            _log("検索", f"科目名「{title}」を先着順対象科目から検索中（{page}ページ目）")
             params = {**SEARCH_PARAMS_BASE, "condition.courseTitle": title, "page": str(page)}
             query = urlencode(params, encoding=KULASIS_ENCODING, errors="replace")
             r = self._req("GET", f"{base}?{query}")
             r.encoding = KULASIS_ENCODING
             pages.append(r.text)
             soup = BeautifulSoup(r.text, "lxml")
-            self._remember_names(soup)
             if soup.find("a", string=re.compile("次の30件")) is None:
                 break
         return pages
@@ -361,22 +362,23 @@ class KulasisClient:
         r.encoding = KULASIS_ENCODING
         return r.text
 
-    def apply(self, lecture_no: str) -> None:
+    def apply(self, lecture_no: str) -> bool:
         """指定lectureNoの科目を「候補科目」に追加する(candidate_add)。
 
+        戻り値: True = 追加を送信して時間割への反映を確認した / False = 既に時間割にあり送信しなかった
         実測: POST candidate_add → 302 → timeslot_list（確認ページなし）。
         ※履修登録の確定は登録期間(Step2)の「登録科目の決定へ」で別途行う必要がある。
         """
         # 二重追加時の挙動が未確認なので、既に時間割に入っていれば送信しない
         if lecture_no in self._registered_nos(self._timeslot_html()):
-            print(f"[apply] lectureNo={lecture_no} は既に時間割に入っているため送信をスキップ")
-            return
+            _log("申込", f"lectureNo={lecture_no} は既に時間割(候補)に入っているため、追加は送信しません")
+            return False
 
         r = self._req("POST", self._sibling("candidate_add"), data={"lectureNo": lecture_no})
         r.encoding = KULASIS_ENCODING
 
         chain = " -> ".join(f"{h.status_code} {h.headers.get('Location', '')}" for h in r.history)
-        print(f"[apply] lectureNo={lecture_no} 経路: {chain or '(リダイレクトなし)'} / 最終: {r.status_code} {r.url}")
+        _log("申込", f"「追加」を送信しました lectureNo={lecture_no}（応答の経路: {chain or 'リダイレクトなし'} / 最終ページ: {r.url}）")
 
         if _has_password_field(r.text):
             raise ApplyError(f"セッション切れの可能性: ログイン画面に戻されました lectureNo={lecture_no}")
@@ -384,9 +386,10 @@ class KulasisClient:
         # リダイレクト先が timeslot_list ならその応答で確認、違えば取り直す
         after = r.text if "timeslot_list" in r.url else self._timeslot_html()
         ok = lecture_no in self._registered_nos(after)
-        print(f"[apply] 時間割での確認: {ok}")
+        _log("申込", f"時間割ページで科目を確認: {'✅ 載っています（追加成功）' if ok else '❌ 見当たりません（追加失敗の可能性）'}")
         if not ok:
             area = BeautifulSoup(after, "lxml").find("div", class_="contents")
             snippet = " ".join((area or BeautifulSoup(after, "lxml")).get_text(" ", strip=True).split())[:400]
-            print(f"[apply] 応答本文(先頭400字): {snippet}")
+            _log("申込", f"応答本文(先頭400字): {snippet}")
             raise ApplyError(f"追加後の時間割に科目が見当たりません(追加失敗の可能性) lectureNo={lecture_no}")
+        return True

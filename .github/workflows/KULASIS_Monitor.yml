@@ -13,7 +13,7 @@ permissions:
 jobs:
   monitor:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
 
     steps:
       - uses: actions/checkout@v4
@@ -33,9 +33,34 @@ jobs:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: python -m src.main
 
+      # main が実行中に更新（force push含む）されても失敗しないよう、
+      # 最新の main を取り直してから state.json だけを載せて push する。
       - name: Commit state.json
         if: always()
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "chore: update state"
-          file_pattern: "state.json"
+        run: |
+          if [ -z "$(git status --porcelain -- state.json)" ]; then
+            echo "[state] state.json に変更なし。コミット不要です"
+            exit 0
+          fi
+          cp state.json /tmp/state.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for i in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
+            cp /tmp/state.json state.json
+            git add state.json
+            if git diff --cached --quiet; then
+              echo "[state] 最新の main と同じ内容のためコミット不要です"
+              exit 0
+            fi
+            git commit -m "chore: update state"
+            if git push origin HEAD:main; then
+              echo "[state] state.json を push しました"
+              exit 0
+            fi
+            echo "[state] push に失敗しました(main が更新された可能性)。${i}/3回目。取り直して再試行します"
+            sleep 3
+          done
+          echo "[state] state.json の push に3回失敗しました" >&2
+          exit 1

@@ -1,6 +1,9 @@
 """パーサ・照合・状態遷移のテスト。HTMLは実サイトのものではなく、lecture_searchの列構成を模した合成データ。"""
+import requests
+from types import SimpleNamespace
+from src.main import _is_transient
 from src.config import Course, norm
-from src.main import build_message, find_row, status_of
+from src.main import build_message, find_row, format_course_status, status_of
 from src.parser import parse_lecture_search
 from src.state import transition_kind
 
@@ -95,3 +98,25 @@ def test_build_message_mentions_auto_apply():
     row = find_row(c, rows)
     msg = build_message("available", c, row, applied=True)
     assert "自動で申込" in msg
+
+
+def test_format_course_status_is_four_lines_and_labels_full():
+    rows = parse_lecture_search(SAMPLE)
+    c = Course("宗教学II", "火", 2)
+    message = format_course_status(
+        c, find_row(c, rows), "not_found", "full",
+        auto_apply=True, kulasis_applied=False, recorded_applied=False, fail_count=0,
+    )
+    assert message.splitlines() == [
+        "❌ 満席（席が埋まっています）  火2 宗教学II",
+        "     席数: 40/40人（残り0席）",
+        "     前回→今回: 見つからず → 満席",
+        "     自動申込: ON / KULASIS上の申込: なし / 申込済みの記録: なし / 申込失敗の連続: 0回",
+    ]
+
+def test_is_transient():
+    assert _is_transient(requests.ConnectionError()) is True
+    assert _is_transient(requests.Timeout()) is True
+    assert _is_transient(requests.HTTPError(response=SimpleNamespace(status_code=502))) is True
+    assert _is_transient(requests.HTTPError(response=SimpleNamespace(status_code=401))) is False
+    assert _is_transient(ValueError("x")) is False
