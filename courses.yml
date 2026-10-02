@@ -1,24 +1,32 @@
 # 監視対象科目。増やすときは「- name: ...」のブロックを足して push するだけ。
 #
-#   name   : 通知に表示する名前
-#   day    : 月 火 水 木 金 土
-#   period : 1〜6（時限）
-#   match  : (任意) KULASIS上の科目名と照合する文字列。省略時は name。
-#            全角/半角・ローマ数字(Ⅱ/II)・空白の違いは自動で吸収される。
+#   name       : 通知に表示する名前
+#   day        : 月 火 水 木 金 土
+#   period     : 1〜6（時限）
+#   match      : (任意) KULASIS上の科目名と照合する文字列。省略時は name。
+#                全角/半角・ローマ数字(Ⅱ/II)・空白の違いは自動で吸収される。
+#   lecture_no : (任意) KULASISの lectureNo。書いてあると、rush モードでは検索を省略して
+#                直接申込を送る（ページ遷移が減り、公開直後に最速で申込める）。
+#                値は watch モード実行ログの各科目の「lecture_no: ...」に出るものをそのまま写す。
+#                数字のみ。先頭の0もそのまま保たれる。書かない科目は従来どおり検索する。
+#                rush では courses.yml の上の科目から順に送るので、優先したい科目を上に書く。
 
 courses:
   - name: 宗教学各論II（死生学）
     day: 火
     period: 1
     match: 宗教学各論II
+    # lecture_no: ""
 
   - name: 言学II
     day: 木
     period: 3
+    # lecture_no: ""
 
   - name: 社会学II
     day: 金
     period: 4
+    # lecture_no: ""
 
   # - name: Biological Sciences through Scientific Articles II-E2
     # day: 火
@@ -27,3 +35,4 @@ courses:
   - name: Programming Practice (Python) -E2
     day: 水
     period: 5
+    lecture_no: 64073  # 実行ログの「lectureNo=64073」より

@@ -4,10 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "動作モード: watch(キャンセル待ち監視) / rush(先着順の公開直後)。空欄なら config.yml の mode"
+        description: "動作モード: watch=キャンセル待ち監視(速さ優先) / rush=先着順の公開直後(混雑に耐える)"
         required: false
-        default: ""
-        type: string
+        default: watch
+        type: choice
+        options:
+          - watch
+          - rush
 
 concurrency:
   group: kulasis-monitor
@@ -29,7 +32,7 @@ jobs:
           python-version: "3.12"
           cache: pip
 
-      - run: pip install -r requirements.txt
+      - run: pip install -q --disable-pip-version-check -r requirements.txt
 
       - name: Run KULASIS Monitor Bot
         env:

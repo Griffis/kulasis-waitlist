@@ -1,4 +1,4 @@
-"""エントリポイント: python -m src.main [--dry-run | --test-discord | --offline-html FILE]"""
+"""エントリポイント: python -m src.main [--mode watch|rush] [--dry-run | --test-discord | --offline-html FILE]"""
 from __future__ import annotations
 
 import argparse
@@ -6,13 +6,15 @@ import os
 import sys
 import time
 from collections import Counter
+from contextlib import nullcontext as _null_ctx
 from pathlib import Path
 
 from dotenv import load_dotenv
 import requests
 
 from .config import PROFILES, Course, Profile, load_config, load_courses, norm, resolve_profile
-from .kulasis_client import KulasisClient, KulasisError, budget_left, is_transient
+from .kulasis_client import KulasisClient, KulasisError, budget_left, is_transient, set_run_limits
+from .logutil import elapsed, log, log_start, timed
 from .notify import send_discord
 from .parser import EntryRow, parse_lecture_search
 from .state import load_state, save_state, transition_kind
@@ -25,8 +27,6 @@ load_dotenv()
 LOGIN_MAX_ATTEMPTS = 5
 LOGIN_RETRY_WAITS = (2, 4, 8, 16)  # ログインやり直しまでの待ち秒数。混雑時にすぐ再ログインしても同じ所で失敗しやすい
 
-
-_RUN_STARTED = time.monotonic()
 
 
 class LoginRetryExhausted(KulasisError):
@@ -57,9 +57,9 @@ def login_with_retry(
         started = time.monotonic()
         try:
             client.login(user, password, totp_secret=totp_secret)
-            print(f"[ログイン] 所要時間 {time.monotonic() - started:.1f}秒")
+            log("ログイン", f"⏱ 所要時間 {time.monotonic() - started:.1f}秒")
             if errors:
-                print(f"[ログイン] {attempt}回目で成功（事前の失敗 {len(errors)}回: {', '.join(errors)}）")
+                log("ログイン", f"✅ {attempt}回目で成功（事前の失敗 {len(errors)}回: {', '.join(errors)}）")
             return client, len(errors), errors
         except (requests.RequestException, KulasisError) as e:
             if not is_transient(e):
@@ -68,14 +68,14 @@ def login_with_retry(
             label = f"HTTP{status}" if status else type(e).__name__
             errors.append(label)
             last_exc = e
-            print(f"[ログイン] 失敗 {label}（{time.monotonic() - started:.1f}秒後。{attempt}/{LOGIN_MAX_ATTEMPTS}回目）")
+            log("ログイン", f"❌ 失敗 {label}（{time.monotonic() - started:.1f}秒後。{attempt}/{LOGIN_MAX_ATTEMPTS}回目）")
             if attempt >= LOGIN_MAX_ATTEMPTS or not budget_left():
                 break
             wait = float(LOGIN_RETRY_WAITS[min(attempt - 1, len(LOGIN_RETRY_WAITS) - 1)])
             if client.otp_sent:
                 # 同じワンタイムパスワードの再送は拒否され得るため、次の30秒枠まで待つ
                 wait = max(wait, _seconds_to_next_totp_window())
-                print(f"[ログイン] ワンタイムパスワード送信済みのため、次のコードに切り替わるまで{wait:.0f}秒待つ")
+                log("ログイン", f"ワンタイムパスワード送信済みのため、次のコードに切り替わるまで{wait:.0f}秒待つ")
             time.sleep(wait)
     tally = ", ".join(f"{k}×{v}" for k, v in Counter(errors).items())
     raise LoginRetryExhausted(
@@ -174,7 +174,39 @@ def build_message(kind: str, course: Course, row: EntryRow | None, applied: bool
     return f"⚠️ 検索結果に見つからない: {label}（科目名/曜時限の不一致、または先着順の対象外の可能性）"
 
 
+def describe_profile(p: Profile) -> str:
+    """動作モードの主な設定を1行にまとめる（ログ用）。"""
+    return (
+        f"事前取得={'ON' if p.warmup else 'OFF'} / 読み取り待ち={p.timeslot_read_timeout_sec:.0f}秒 / "
+        f"GET再送={p.req_max_attempts}回 / 申込再送={p.apply_max_attempts}回 / "
+        f"実行上限={p.run_deadline_sec:.0f}秒 / 直接申込={'ON' if p.direct_apply else 'OFF'}"
+    )
+
+
+def build_direct_message(course: Course) -> str:
+    return (
+        f"🚀 **直接申込を送信した** {course.day_period} {course.name}\n"
+        f"→ 検索を省略し lecture_no={course.lecture_no} へ追加を送信、時間割への反映を確認した。"
+        "履修登録の確定は、登録期間中に「登録科目の決定へ」から行う必要がある。"
+    )
+
+
+def build_apply_fail_notice(course: Course, fail_count: int, fail_errors: list[str], err_label: str, e: BaseException) -> str:
+    tally = Counter(fail_errors)
+    detail = ", ".join(f"{k}×{v}" for k, v in tally.items())
+    return (
+        f"⚠️ {course.day_period} {course.name}: 空きがあるのに申込に"
+        f"{fail_count}回連続で失敗している（内訳: {detail} / 直近: {err_label}: {e}）"
+    )
+
+
+def _err_label_of(e: BaseException) -> str:
+    status_code = getattr(getattr(e, "response", None), "status_code", None)
+    return f"HTTP{status_code}" if status_code else type(e).__name__
+
+
 def run(args: argparse.Namespace) -> int:
+    log_start()
     courses = load_courses()
     cfg = load_config()
 
@@ -195,9 +227,15 @@ def run(args: argparse.Namespace) -> int:
 
     def notify(msg: str) -> None:
         if args.dry_run:
-            print(f"[dry-run] {msg}")
-        else:
+            log("通知", f"[dry-run] {msg}")
+            return
+        started = time.monotonic()
+        try:
             send_discord(webhook, msg)
+        except requests.RequestException as e:  # 通知の失敗で、申込結果の state 保存まで巻き込まない
+            log("通知", f"❌ Discord通知に失敗: {type(e).__name__}: {e}")
+        else:
+            log("通知", f"⏱ Discord通知: {time.monotonic() - started:.2f}秒")
 
     if args.test_discord:
         send_discord(webhook, "✅ kulasis-waitlist: テスト通知")
@@ -210,7 +248,7 @@ def run(args: argparse.Namespace) -> int:
     try:
         user, password = os.environ["KULASIS_USER"], os.environ["KULASIS_PASSWORD"]
     except KeyError as e:
-        print(f"環境変数 {e} が未設定", file=sys.stderr)
+        log("エラー", f"環境変数 {e} が未設定", file=sys.stderr)
         return 2
 
     totp_secret = os.environ.get("TOTP_SECRET")
@@ -218,11 +256,15 @@ def run(args: argparse.Namespace) -> int:
     try:
         profile = resolve_profile(cfg, args.mode, os.environ.get("KULASIS_MODE"))
     except ValueError as e:
-        print(f"[エラー] {e}", file=sys.stderr)
+        log("エラー", str(e), file=sys.stderr)
         return 2
-    print(f"[モード] {profile.name}: {profile.description}")
+    set_run_limits(profile.retry_budget_sec, profile.run_deadline_sec)
+    log("モード", f"{profile.name}: {profile.description}")
+    log("モード", f"設定: {describe_profile(profile)}")
 
     rows_by_course: dict[str, list[EntryRow]] = {}
+    direct_sent: dict[str, bool] = {}   # 直接申込が成功した科目 → 実際に送信したか(False=既に時間割にあった)
+    pending_notices: list[str] = []     # 申込を優先するため、通知は全科目の申込・検索が終わってから送る
     try:
         client, _login_errors, _ = login_with_retry(cfg, user, password, totp_secret, profile)
 
@@ -230,23 +272,63 @@ def run(args: argparse.Namespace) -> int:
             client.debug_double_apply(args.debug_double_apply)
             return 0
 
-        debug_pages: list[str] = []
-        for i, c in enumerate(courses):
-            if i:
-                if profile.course_gap_sec > 0:
-                    time.sleep(profile.course_gap_sec)  # サーバ負荷・アカウントロック回避のため間隔を空ける
-            pages = client.fetch_lecture_search(c.match or c.name)
-            debug_pages.extend(pages)
-            rows: list[EntryRow] = []
-            for html in pages:
-                rows.extend(parse_lecture_search(html))
-            rows_by_course[c.key] = rows
+        # --- 直接申込（rush のみ）: lecture_no がある科目は、検索を省略して先に申込を送る ---
+        has_lecture_no = [c for c in courses if profile.direct_apply and c.lecture_no]
+        if has_lecture_no and not auto_apply:
+            log("申込", "⏭ auto_apply が OFF のため、直接申込は行わず通常の検索だけ行う")
+        direct_courses = [
+            c for c in has_lecture_no
+            if auto_apply and not (state["courses"].get(c.key) or {}).get("applied")
+        ]
+        if direct_courses:
+            log("申込", f"🚀 直接申込: {len(direct_courses)}科目（検索を省略。courses.yml の上から順に送る）")
+        with timed("申込", f"直接申込 {len(direct_courses)}科目") if direct_courses else _null_ctx():
+            for c in direct_courses:
+                label = f"{c.day_period} {c.name}"
+                if args.dry_run:
+                    log("申込", f"[dry-run] 🚀 {label}: lecture_no={c.lecture_no} へ直接申込を送る予定（実際には送らない）")
+                    continue
+                started = time.monotonic()
+                try:
+                    sent = client.apply(c.lecture_no)
+                except (KulasisError, requests.RequestException) as e:
+                    err_label = _err_label_of(e)
+                    entry = state["courses"].setdefault(c.key, {})
+                    fail_count = int(entry.get("apply_fail_count", 0)) + 1
+                    fail_errors = list(entry.get("apply_fail_errors", [])) + [err_label]
+                    entry["apply_fail_count"] = fail_count
+                    entry["apply_fail_errors"] = fail_errors
+                    log("申込", f"❌ {label}: 直接申込に失敗（{fail_count}回連続, 今回: {err_label}, {time.monotonic() - started:.2f}秒）{e}")
+                    if fail_count % fail_notify_threshold == 0:
+                        pending_notices.append(build_apply_fail_notice(c, fail_count, fail_errors, err_label, e))
+                    continue  # 失敗した科目は、このあと通常の検索で状態(満席など)を確認する
+                direct_sent[c.key] = bool(sent)
+                log("申込", f"✅ {label}: 直接申込 {'成功' if sent else '送信不要（既に時間割にある）'}（{time.monotonic() - started:.2f}秒）")
 
-        if args.dry_run:  # デバッグ保存は --dry-run 実行時のみ
+        # --- 検索: 直接申込で済んだ科目は省略する ---
+        search_courses = [c for c in courses if c.key not in direct_sent]
+        debug_pages: list[str] = []
+        if search_courses:
+            with timed("検索", f"{len(search_courses)}科目の検索"):
+                for i, c in enumerate(search_courses):
+                    if i and profile.course_gap_sec > 0:
+                        time.sleep(profile.course_gap_sec)  # サーバ負荷・アカウントロック回避のため間隔を空ける
+                    started = time.monotonic()
+                    pages = client.fetch_lecture_search(c.match or c.name)
+                    debug_pages.extend(pages)
+                    rows: list[EntryRow] = []
+                    for html in pages:
+                        rows.extend(parse_lecture_search(html))
+                    rows_by_course[c.key] = rows
+                    log("検索", f"⏱ {c.day_period} {c.name}: {time.monotonic() - started:.2f}秒（{len(pages)}ページ・{len(rows)}行）")
+        else:
+            log("検索", "⏭ 全科目を直接申込で処理したため、検索は省略")
+
+        if args.dry_run and debug_pages:  # デバッグ保存は --dry-run 実行時のみ
             Path("debug_fetched.html").write_text("\n<!-- ==== next page ==== -->\n".join(debug_pages), encoding="utf-8")
     except (KulasisError, requests.RequestException) as e:
         msg = f"{type(e).__name__}: {e}"
-        print(msg, file=sys.stderr)
+        log("エラー", msg, file=sys.stderr)
         if state.get("last_error") != msg:  # 同じエラーは1回だけ通知
             notify(f"❌ KULASIS監視エラー: {msg}")
             state["last_error"] = msg
@@ -254,10 +336,32 @@ def run(args: argparse.Namespace) -> int:
                 save_state(state)
         return 0
 
+    for notice in pending_notices:
+        notify(notice)
+
     for c in courses:
+        entry = state["courses"].get(c.key) or {}
+
+        if c.key in direct_sent:  # 直接申込で処理済みの科目
+            sent = direct_sent[c.key]
+            old_status = entry.get("status")
+            log("監視", "\n".join((
+                f"{'🚀 直接申込を送信' if sent else '✅ 既に時間割にある'}  {c.day_period} {c.name}",
+                f"     lecture_no: {c.lecture_no}（検索は省略）",
+                f"     前回→今回: {_previous_status(old_status)} → {'申込送信済み' if sent else '申込済み'}",
+                f"     自動申込: ON / 申込済みの記録: あり / 申込失敗の連続: 0回",
+            )))
+            if sent:
+                notify(build_direct_message(c))
+                entry["status"] = "available"
+            entry["apply_fail_count"] = 0
+            entry["apply_fail_errors"] = []
+            entry["applied"] = True
+            state["courses"][c.key] = entry
+            continue
+
         row = find_row(c, rows_by_course.get(c.key, []))
         status = status_of(row)
-        entry = state["courses"].get(c.key) or {}
         old_status = entry.get("status")
         already_applied = bool(entry.get("applied"))
         fail_count = int(entry.get("apply_fail_count", 0))
@@ -276,28 +380,24 @@ def run(args: argparse.Namespace) -> int:
             and not args.dry_run
         )
         if should_try_apply:
+            started = time.monotonic()
             try:
                 sent = client.apply(row.lecture_no)
                 applied_now = bool(sent)  # 既に時間割にあり送信しなかった場合は False
                 already_applied = True
                 fail_count = 0
                 fail_errors = []
-                print(f"{c.key}: 自動申込 成功" if sent else f"{c.key}: 既に時間割にあるため送信不要")
+                took = time.monotonic() - started
+                log("申込", f"✅ {c.key}: 自動申込 成功（{took:.2f}秒）" if sent else f"✅ {c.key}: 既に時間割にあるため送信不要")
             except (KulasisError, requests.RequestException) as e:
-                status_code = getattr(getattr(e, "response", None), "status_code", None)
-                err_label = f"HTTP{status_code}" if status_code else type(e).__name__
+                err_label = _err_label_of(e)
                 fail_count += 1
                 fail_errors.append(err_label)
-                print(f"{c.key}: 自動申込 失敗({fail_count}回連続, 今回: {err_label}) {e}")
+                log("申込", f"❌ {c.key}: 自動申込 失敗({fail_count}回連続, 今回: {err_label}, {time.monotonic() - started:.2f}秒) {e}")
                 if fail_count % fail_notify_threshold == 0:
-                    tally = Counter(fail_errors)
-                    detail = ", ".join(f"{k}×{v}" for k, v in tally.items())
-                    notify(
-                        f"⚠️ {c.day_period} {c.name}: 空きがあるのに申込に"
-                        f"{fail_count}回連続で失敗している（内訳: {detail} / 直近: {err_label}: {e}）"
-                    )
+                    notify(build_apply_fail_notice(c, fail_count, fail_errors, err_label, e))
 
-        print(format_course_status(
+        log("監視", format_course_status(
             c,
             row,
             old_status,
@@ -307,6 +407,8 @@ def run(args: argparse.Namespace) -> int:
             recorded_applied=already_applied,
             fail_count=fail_count,
         ))
+        if row is not None and row.lecture_no:  # rush で直接申込するときは、この値を courses.yml の lecture_no に書く
+            print(f"     lecture_no: {row.lecture_no}")
 
         if kind:
             notify(build_message(kind, c, row, applied_now))
@@ -324,8 +426,9 @@ def run(args: argparse.Namespace) -> int:
     state["courses"] = {k: v for k, v in state["courses"].items() if k in live}
     state["last_error"] = None
     if not args.dry_run:
-        save_state(state)
-    print(f"[完了] {len(courses)}科目のチェックが終了（実行時間 {time.monotonic() - _RUN_STARTED:.1f}秒）")
+        with timed("state", "state.json保存"):
+            save_state(state)
+    log("完了", f"{len(courses)}科目のチェックが終了（実行時間 {elapsed():.1f}秒）")
     return 0
 
 

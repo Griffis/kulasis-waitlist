@@ -13,7 +13,9 @@ import pyotp
 import requests
 from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
 
+from . import logutil
 from .config import PROFILES, Profile
+from .logutil import timed
 
 # BS4の警告を非表示にする
 warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
@@ -48,7 +50,7 @@ RETRY_AFTER_CAP_SEC = 20               # Retry-After ヘッダの待ち秒数の
 RATE_LIMIT_MIN_WAIT = 2.0              # 429でRetry-Afterが無いときの最短待ち（連打でアクセス制限を悪化させない）
 RETRY_BUDGET_SEC = 360                 # プロセス開始からこの秒数を超えたら、以後は再試行しない
 RUN_DEADLINE_SEC = 480                 # 1回の実行の上限。各リクエストの待ちもここまでに収める（Actionsのtimeout=10分）
-_T0 = time.monotonic()
+_T0 = logutil.T0  # ログの経過秒と同じ起点（プロセス開始）を使う
 
 # 実ページのページ送りリンクと同じ検索条件（hasCapacity=true が「先着順対象科目」トグル）
 SEARCH_PARAMS_BASE = {
@@ -68,6 +70,13 @@ SEARCH_PARAMS_BASE = {
     "condition.numberingLanguageNo": "",
     "condition.numberingBunkaNo": "",
 }
+
+
+def set_run_limits(budget_sec: float, deadline_sec: float) -> None:
+    """動作モードに応じて、再試行の予算と実行の上限(秒)を設定する。main が開始時に1回呼ぶ。"""
+    global RETRY_BUDGET_SEC, RUN_DEADLINE_SEC
+    RETRY_BUDGET_SEC = float(budget_sec)
+    RUN_DEADLINE_SEC = float(deadline_sec)
 
 
 def budget_left() -> bool:
@@ -142,8 +151,8 @@ def _err_label(e: BaseException) -> str:
 
 
 def _log(tag: str, msg: str) -> None:
-    """[見出し] 説明 の形式でログを出す。ID・sessid・パスワード等は出さないこと。"""
-    print(f"[{tag}] {msg}")
+    """[経過秒] [見出し] 説明 の形式でログを出す。ID・sessid・パスワード等は出さないこと。"""
+    logutil.log(tag, msg)
 
 
 class KulasisError(Exception):
@@ -225,6 +234,8 @@ class KulasisClient:
     def __init__(self, cfg: dict, timeout: int = READ_TIMEOUT_SEC, profile: Profile | None = None):
         self.cfg = cfg
         self.profile = profile or PROFILES["watch"]  # 動作モード（事前取得の有無・待ち時間）
+        # モード未指定(単体利用・テスト)のときは、従来どおりモジュール定数の再送設定を使う
+        self._explicit_profile = profile is not None
         self.timeout = timeout
         self.session = requests.Session()
         self._warmed = False
@@ -235,6 +246,22 @@ class KulasisClient:
             "User-Agent": UA,
             "Accept-Language": "ja,ja-JP;q=0.9,en;q=0.8",
         })
+
+    @property
+    def req_max_attempts(self) -> int:
+        return self.profile.req_max_attempts if self._explicit_profile else REQ_MAX_ATTEMPTS
+
+    @property
+    def retry_waits(self) -> tuple:
+        return self.profile.retry_waits if self._explicit_profile else RETRY_WAITS
+
+    @property
+    def apply_max_attempts(self) -> int:
+        return self.profile.apply_max_attempts if self._explicit_profile else APPLY_MAX_ATTEMPTS
+
+    @property
+    def apply_retry_waits(self) -> tuple:
+        return self.profile.apply_retry_waits if self._explicit_profile else APPLY_RETRY_WAITS
 
     def _read_timeout(self, url: str) -> float:
         """URLに応じた読み取り待ち秒数。履修登録ページは混雑時に応答が遅いので長く待つ。実行の上限も超えない。"""
@@ -249,7 +276,7 @@ class KulasisClient:
         実測: 認証画面(execution=e1s1)のPOSTが502 → 再送で500になった。
         POSTの失敗は、呼び出し側(login_with_retry / apply)が「最初からやり直す」か「反映を確認してから再送」で扱う。
         """
-        attempts = REQ_MAX_ATTEMPTS if (retry and method.upper() == "GET") else 1
+        attempts = self.req_max_attempts if (retry and method.upper() == "GET") else 1
         path = urlparse(url).path
         for attempt in range(1, attempts + 1):
             started = time.monotonic()
@@ -269,7 +296,7 @@ class KulasisClient:
                     raise
                 if attempt >= attempts or not budget_left():
                     raise
-                wait = _retry_wait(attempt, e)
+                wait = _retry_wait(attempt, e, self.retry_waits)
                 waited = time.monotonic() - started
                 _log("再送", f"{method} {path}: {_err_label(e)}（{waited:.1f}秒後に失敗）。{wait:.1f}秒待って再送（失敗{attempt}/{attempts}回目）")
                 time.sleep(wait)
@@ -489,10 +516,11 @@ class KulasisClient:
             return
         for page in ("top", "timeslot_list"):
             try:
-                if page == "timeslot_list":
-                    self._timeslot_html()
-                else:
-                    self._req("GET", self._sibling(page))
+                with timed("準備", f"事前取得 {page}"):
+                    if page == "timeslot_list":
+                        self._timeslot_html()
+                    else:
+                        self._req("GET", self._sibling(page))
             except requests.RequestException as e:
                 _log("準備", f"{page} ページの取得に失敗。続行する: {e}")
 
@@ -510,15 +538,15 @@ class KulasisClient:
             _log("検索", f"科目名「{title}」を先着順対象科目から検索（{page}ページ目）")
             params = {**SEARCH_PARAMS_BASE, "condition.courseTitle": title, "page": str(page)}
             query = urlencode(params, encoding=KULASIS_ENCODING, errors="replace")
-            for attempt in range(1, REQ_MAX_ATTEMPTS + 1):
+            for attempt in range(1, self.req_max_attempts + 1):
                 r = self._req("GET", f"{base}?{query}")
                 r.encoding = KULASIS_ENCODING
                 if _looks_like_search_page(r.text):
                     break
-                if attempt >= REQ_MAX_ATTEMPTS or not budget_left():
+                if attempt >= self.req_max_attempts or not budget_left():
                     raise UnexpectedPage("検索結果ページの形式が想定と異なる(メンテナンス・エラー画面、セッション切れ等の可能性)")
-                wait = _retry_wait(attempt)
-                _log("再送", f"検索ページの内容が想定外(HTTP200)。{wait:.1f}秒待って再送（失敗{attempt}/{REQ_MAX_ATTEMPTS}回目）")
+                wait = _retry_wait(attempt, None, self.retry_waits)
+                _log("再送", f"検索ページの内容が想定外(HTTP200)。{wait:.1f}秒待って再送（失敗{attempt}/{self.req_max_attempts}回目）")
                 time.sleep(wait)
             pages.append(r.text)
             soup = BeautifulSoup(r.text, "lxml")
@@ -565,16 +593,16 @@ class KulasisClient:
             _log("申込", f"lectureNo={lecture_no} は既に時間割(候補)にあるため、追加は送信しない")
             return False
 
-        for attempt in range(1, APPLY_MAX_ATTEMPTS + 1):
+        for attempt in range(1, self.apply_max_attempts + 1):
             started = time.monotonic()
             try:
                 return self._apply_once(lecture_no)
             except requests.RequestException as e:
-                if not is_transient(e) or attempt >= APPLY_MAX_ATTEMPTS or not budget_left():
+                if not is_transient(e) or attempt >= self.apply_max_attempts or not budget_left():
                     raise
                 elapsed = time.monotonic() - started
-                wait = _retry_wait(attempt, e, APPLY_RETRY_WAITS)
-                _log("申込", f"送信失敗 {_err_label(e)}（{elapsed:.1f}秒後）。{wait:.1f}秒待って、反映を確認してから再送（失敗{attempt}/{APPLY_MAX_ATTEMPTS}回目）")
+                wait = _retry_wait(attempt, e, self.apply_retry_waits)
+                _log("申込", f"送信失敗 {_err_label(e)}（{elapsed:.1f}秒後）。{wait:.1f}秒待って、反映を確認してから再送（失敗{attempt}/{self.apply_max_attempts}回目）")
                 time.sleep(wait)
                 # 応答に時間がかかった失敗は、元のリクエストがまだ処理中の恐れがある。確認を間隔を空けて重ねてから再送する
                 checks = 1 + (len(APPLY_SETTLE_WAITS) if elapsed >= APPLY_SLOW_FAIL_SEC else 0)
