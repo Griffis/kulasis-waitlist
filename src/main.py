@@ -11,7 +11,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 import requests
 
-from .config import Course, load_config, load_courses, norm
+from .config import PROFILES, Course, Profile, load_config, load_courses, norm, resolve_profile
 from .kulasis_client import KulasisClient, KulasisError, budget_left, is_transient
 from .notify import send_discord
 from .parser import EntryRow, parse_lecture_search
@@ -23,7 +23,10 @@ load_dotenv()
 # ログインのやり直し（第2層）。1リクエスト単位の再送(KulasisClient._req)で回復しない場合に、
 # セッションを作り直して最初からログインし直す。
 LOGIN_MAX_ATTEMPTS = 5
-LOGIN_RETRY_WAIT_SEC = 3
+LOGIN_RETRY_WAITS = (2, 4, 8, 16)  # ログインやり直しまでの待ち秒数。混雑時にすぐ再ログインしても同じ所で失敗しやすい
+
+
+_RUN_STARTED = time.monotonic()
 
 
 class LoginRetryExhausted(KulasisError):
@@ -40,7 +43,7 @@ def _seconds_to_next_totp_window() -> float:
 
 
 def login_with_retry(
-    cfg: dict, user: str, password: str, totp_secret: str | None
+    cfg: dict, user: str, password: str, totp_secret: str | None, profile: Profile | None = None
 ) -> tuple[KulasisClient, int, list[str]]:
     """一時的な障害(502/503/504・接続エラー・タイムアウト)のとき、最大 LOGIN_MAX_ATTEMPTS 回までログインをやり直す。
 
@@ -50,23 +53,25 @@ def login_with_retry(
     errors: list[str] = []
     last_exc: Exception | None = None
     for attempt in range(1, LOGIN_MAX_ATTEMPTS + 1):
-        client = KulasisClient(cfg)  # 毎回新しいセッションで試す
+        client = KulasisClient(cfg, profile=profile)  # 毎回新しいセッションで試す
+        started = time.monotonic()
         try:
             client.login(user, password, totp_secret=totp_secret)
+            print(f"[ログイン] 所要時間 {time.monotonic() - started:.1f}秒")
             if errors:
                 print(f"[ログイン] {attempt}回目で成功（事前の失敗 {len(errors)}回: {', '.join(errors)}）")
             return client, len(errors), errors
-        except requests.RequestException as e:
+        except (requests.RequestException, KulasisError) as e:
             if not is_transient(e):
                 raise
             status = getattr(getattr(e, "response", None), "status_code", None)
             label = f"HTTP{status}" if status else type(e).__name__
             errors.append(label)
             last_exc = e
-            print(f"[ログイン] 失敗 {label}（{attempt}/{LOGIN_MAX_ATTEMPTS}回目）")
+            print(f"[ログイン] 失敗 {label}（{time.monotonic() - started:.1f}秒後。{attempt}/{LOGIN_MAX_ATTEMPTS}回目）")
             if attempt >= LOGIN_MAX_ATTEMPTS or not budget_left():
                 break
-            wait = float(LOGIN_RETRY_WAIT_SEC)
+            wait = float(LOGIN_RETRY_WAITS[min(attempt - 1, len(LOGIN_RETRY_WAITS) - 1)])
             if client.otp_sent:
                 # 同じワンタイムパスワードの再送は拒否され得るため、次の30秒枠まで待つ
                 wait = max(wait, _seconds_to_next_totp_window())
@@ -210,14 +215,26 @@ def run(args: argparse.Namespace) -> int:
 
     totp_secret = os.environ.get("TOTP_SECRET")
 
+    try:
+        profile = resolve_profile(cfg, args.mode, os.environ.get("KULASIS_MODE"))
+    except ValueError as e:
+        print(f"[エラー] {e}", file=sys.stderr)
+        return 2
+    print(f"[モード] {profile.name}: {profile.description}")
+
     rows_by_course: dict[str, list[EntryRow]] = {}
     try:
-        client, _login_errors, _ = login_with_retry(cfg, user, password, totp_secret)
+        client, _login_errors, _ = login_with_retry(cfg, user, password, totp_secret, profile)
+
+        if args.debug_double_apply:  # 検証用: 重複したときのサーバーの応答を見る
+            client.debug_double_apply(args.debug_double_apply)
+            return 0
 
         debug_pages: list[str] = []
         for i, c in enumerate(courses):
             if i:
-                time.sleep(1)  # サーバ負荷・アカウントロック回避のため間隔を空ける
+                if profile.course_gap_sec > 0:
+                    time.sleep(profile.course_gap_sec)  # サーバ負荷・アカウントロック回避のため間隔を空ける
             pages = client.fetch_lecture_search(c.match or c.name)
             debug_pages.extend(pages)
             rows: list[EntryRow] = []
@@ -308,6 +325,7 @@ def run(args: argparse.Namespace) -> int:
     state["last_error"] = None
     if not args.dry_run:
         save_state(state)
+    print(f"[完了] {len(courses)}科目のチェックが終了（実行時間 {time.monotonic() - _RUN_STARTED:.1f}秒）")
     return 0
 
 
@@ -316,6 +334,14 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--dry-run", action="store_true", help="通知・state保存・自動申込をせず標準出力に出す")
     p.add_argument("--test-discord", action="store_true", help="Discordにテスト通知だけ送る")
     p.add_argument("--offline-html", metavar="FILE", help="保存済みHTMLでパーサだけ確認する")
+    p.add_argument(
+        "--mode", choices=sorted(PROFILES),
+        help="動作モード（watch=キャンセル待ち監視 / rush=先着順の公開直後）。省略時は環境変数 KULASIS_MODE → config.yml の mode",
+    )
+    p.add_argument(
+        "--debug-double-apply", metavar="LECTURE_NO",
+        help="【検証用】指定lectureNoの追加を続けて2回送り、重複時の応答を観察する（実際に追加される）",
+    )
     return run(p.parse_args(argv))
 
 

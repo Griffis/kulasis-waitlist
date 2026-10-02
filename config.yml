@@ -6,6 +6,19 @@ pages:
   # 履修登録ページの科目検索（先着順トグル = condition.hasCapacity=true）
   lecture_search: "https://www.k.kyoto-u.ac.jp/student/la/timeslot/lecture_search"
 
+# 動作モード。優先順位: --mode > 環境変数 KULASIS_MODE（workflowの入力 mode） > この mode > watch
+#   watch : キャンセル待ちの監視（定期実行・通常時）。事前取得あり（動作確認済みの手順）
+#   rush  : 先着順の公開直後（混雑）。事前取得なし・ページ遷移を最小化・応答を長く待つ
+mode: watch
+
+# モードごとの設定を上書きしたいときだけ書く（省略可）。使える項目:
+#   warmup                    : 検索の前に履修登録トップ・時間割ページを開くか（true/false）
+#   timeslot_read_timeout_sec : 履修登録ページの応答を待つ秒数
+#   course_gap_sec            : 科目ごとの検索の間隔（秒）
+# modes:
+#   rush:
+#     timeslot_read_timeout_sec: 300
+
 apply:
   # 「追加」(candidate_add) 後の確認ページは無い想定。空きを検知した時点で追加を送信する。
   auto_apply: true

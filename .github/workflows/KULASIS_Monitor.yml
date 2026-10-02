@@ -2,6 +2,12 @@ name: KULASIS Monitor
 
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "動作モード: watch(キャンセル待ち監視) / rush(先着順の公開直後)。空欄なら config.yml の mode"
+        required: false
+        default: ""
+        type: string
 
 concurrency:
   group: kulasis-monitor
@@ -31,6 +37,8 @@ jobs:
           KULASIS_PASSWORD: ${{ secrets.KULASIS_PASSWORD }}
           TOTP_SECRET: ${{ secrets.TOTP_SECRET }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          KULASIS_MODE: ${{ inputs.mode }}
+          PYTHONUNBUFFERED: "1"  # ログを即時に出す（タイムアウトで強制終了されても、それまでのログが残る）
         run: python -m src.main
 
       # main が実行中に更新（force push含む）されても失敗しないよう、
